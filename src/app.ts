@@ -2,23 +2,80 @@ import {
   createCliRenderer,
   Box,
   Text,
-  ASCIIFont,
   RGBA,
   type BoxRenderable,
-  type ASCIIFontRenderable,
-  type TextRenderable,
   type OptimizedBuffer,
   engine,
 } from "@opentui/core";
 import type { Provider } from "./providers/base.js";
 import type { SkillCall, SkillCount } from "./models.js";
 import { skillCounts, weeklyCounts, projectShort, timeAgo } from "./data.js";
-import { colors, barColors, barPalette, heatmapColors, rainbowHex, sparkColors } from "./theme.js";
+import { colors, barColors, barPalette, heatmapColors, sparkColors } from "./theme.js";
+import { fbm } from "./noise.js";
 
 const BLOCKS = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
 const SPARK_CHARS = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
 const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const HEATMAP_WEEKS = 16;
+
+const NOISE_CHARS = [" ", "░", "▒", "▓", "█"];
+const NOISE_COLORS = [
+  RGBA.fromHex("#0A0E14"), RGBA.fromHex("#0F1A2E"), RGBA.fromHex("#132B4A"),
+  RGBA.fromHex("#1A3D66"), RGBA.fromHex("#1F4F82"), RGBA.fromHex("#26619E"),
+  RGBA.fromHex("#2E7BBF"), RGBA.fromHex("#3D8FD4"),
+];
+const FONT_FG = RGBA.fromHex("#E0F0FF");
+const FONT_SHADOW = RGBA.fromHex("#0A1628");
+const GLITCH_CHARS = ["█", "▓", "▒", "░", "╌", "╍", "┃", "╳", "▞", "▚"];
+const GLITCH_COLORS = [
+  RGBA.fromHex("#FF6B6B"), RGBA.fromHex("#58A6FF"), RGBA.fromHex("#34D399"),
+  RGBA.fromHex("#FBBF24"), RGBA.fromHex("#A78BFA"), RGBA.fromHex("#E879F9"),
+];
+
+const PIXEL_FONT: Record<string, number[][]> = {
+  S: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  K: [
+    [1, 0, 0, 1],
+    [1, 0, 1, 0],
+    [1, 1, 0, 0],
+    [1, 0, 1, 0],
+    [1, 0, 0, 1],
+  ],
+  I: [
+    [1, 1, 1],
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+    [1, 1, 1],
+  ],
+  L: [
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+  ],
+  E: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 0],
+    [1, 1, 1, 0],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+  ],
+  D: [
+    [1, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 0],
+  ],
+};
 
 type SortMode = "count" | "alpha" | "recent";
 const SORT_LABELS: Record<SortMode, string> = {
@@ -44,18 +101,6 @@ function lerpHex(a: string, b: string, t: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
 
-function rainbowGradient(offset: number, count: number): string[] {
-  const out: string[] = [];
-  const len = rainbowHex.length;
-  for (let i = 0; i < count; i++) {
-    const pos = ((offset + i * 0.12) % 1 + 1) % 1;
-    const idx = pos * (len - 1);
-    const lo = Math.floor(idx);
-    const hi = Math.min(lo + 1, len - 1);
-    out.push(lerpHex(rainbowHex[lo]!, rainbowHex[hi]!, idx - lo));
-  }
-  return out;
-}
 
 function drawBar(buf: OptimizedBuffer, x: number, y: number, width: number, fg: RGBA, bg: RGBA) {
   const full = Math.floor(width);
@@ -151,17 +196,82 @@ export async function run(providers: Provider[]) {
         live: true,
       },
 
-      // === HEADER ===
-      Box(
-        { justifyContent: "center", alignItems: "center", paddingTop: 1 },
-        ASCIIFont({
-          id: "header-font",
-          text: "SKILLED",
-          font: renderer.height >= 32 ? "slick" : "tiny",
-          color: rainbowHex,
-          backgroundColor: "#0D1117",
-        }),
-      ),
+      // === HEADER — perlin noise + blocky font ===
+      Box({
+        id: "header-noise",
+        height: renderer.height >= 32 ? 7 : 5,
+        renderAfter(this: BoxRenderable, buf: OptimizedBuffer, deltaTime: number) {
+          const now = Date.now();
+          const t = (now - startTime) / 1000;
+          const ox = this.screenX;
+          const oy = this.screenY;
+          const w = this.width;
+          const h = this.height;
+
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const n = fbm(x * 0.06 + t * 0.4, y * 0.12 + t * 0.2);
+              const v = Math.max(0, Math.min(1, (n + 0.5)));
+              const charIdx = Math.min(4, Math.floor(v * 5));
+              const colorIdx = Math.min(7, Math.floor(v * 8));
+              buf.setCell(ox + x, oy + y, NOISE_CHARS[charIdx]!, NOISE_COLORS[colorIdx]!, colors.bg);
+            }
+          }
+
+          const text = "SKILLED";
+          const glyphs = text.split("").map((ch) => PIXEL_FONT[ch]!);
+          const fontH = 5;
+          const pw = renderer.height >= 32 ? 2 : 1;
+          const totalW = glyphs.reduce((s, g) => s + g[0]!.length * pw + pw, -pw);
+          const startX = Math.floor((w - totalW) / 2);
+          const startY = Math.floor((h - fontH) / 2);
+
+          let cx = startX;
+          for (const glyph of glyphs) {
+            const gw = glyph[0]!.length;
+            for (let gy = 0; gy < fontH; gy++) {
+              for (let gx = 0; gx < gw; gx++) {
+                if (glyph[gy]![gx]) {
+                  for (let px = 0; px < pw; px++) {
+                    const sx = ox + cx + gx * pw + px;
+                    const sy = oy + startY + gy;
+                    if (sx > ox) buf.setCell(sx - 1, sy + 1, "█", FONT_SHADOW, FONT_SHADOW);
+                    buf.setCell(sx, sy, "█", FONT_FG, FONT_FG);
+                  }
+                }
+              }
+            }
+            cx += gw * pw + pw;
+          }
+
+          // glitch: occasional bursts
+          const glitchPhase = Math.sin(t * 2.5) * Math.sin(t * 7.1);
+          if (glitchPhase > 0.7) {
+            const intensity = Math.floor((glitchPhase - 0.7) * 30);
+            for (let i = 0; i < intensity; i++) {
+              const gx = ox + Math.floor(Math.random() * w);
+              const gy = oy + Math.floor(Math.random() * h);
+              const gc = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]!;
+              const gcolor = GLITCH_COLORS[Math.floor(Math.random() * GLITCH_COLORS.length)]!;
+              buf.setCell(gx, gy, gc, gcolor, colors.bg);
+            }
+            // row shift — displace a random row
+            if (Math.random() > 0.5) {
+              const row = oy + Math.floor(Math.random() * h);
+              const shift = Math.floor(Math.random() * 5) - 2;
+              const raw = buf.buffers;
+              const bw = buf.width;
+              for (let x = 0; x < w; x++) {
+                const srcX = ox + ((x - shift + w) % w);
+                const dstIdx = row * bw + ox + x;
+                const srcIdx = row * bw + srcX;
+                raw.char[dstIdx] = raw.char[srcIdx]!;
+                raw.fg[dstIdx] = raw.fg[srcIdx]!;
+              }
+            }
+          }
+        },
+      }),
 
       // === STATS ROW ===
       Box(
@@ -410,18 +520,6 @@ export async function run(providers: Provider[]) {
       ),
     ),
   );
-
-  // cycling header gradient
-  const headerFont = renderer.root.findDescendantById("header-font") as
-    | ASCIIFontRenderable
-    | undefined;
-
-  renderer.setFrameCallback(async () => {
-    if (headerFont) {
-      const offset = ((Date.now() - startTime) / 4000) % 1;
-      headerFont.color = rainbowGradient(offset, 10);
-    }
-  });
 
   // --- keyboard ---
   renderer.keyInput.on("keypress", (key) => {
