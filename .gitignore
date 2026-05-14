@@ -1,4 +1,2 @@
-.venv/
-__pycache__/
-*.egg-info/
-dist/
+node_modules/
+bun.lock

@@ -1,0 +1,23 @@
+{
+  "name": "skilled",
+  "version": "0.1.0",
+  "description": "TUI dashboard for skill usage stats across AI coding tools",
+  "module": "src/main.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/main.ts"
+  },
+  "bin": {
+    "skilled": "src/main.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.2.10"
+  }
+}
