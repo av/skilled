@@ -6,11 +6,12 @@ import {
   RGBA,
   type BoxRenderable,
   type ASCIIFontRenderable,
+  type TextRenderable,
   type OptimizedBuffer,
   engine,
 } from "@opentui/core";
 import type { Provider } from "./providers/base.js";
-import type { SkillCall } from "./models.js";
+import type { SkillCall, SkillCount } from "./models.js";
 import { skillCounts, weeklyCounts, projectShort, timeAgo } from "./data.js";
 import { colors, barColors, barPalette, heatmapColors, rainbowHex, sparkColors } from "./theme.js";
 
@@ -18,6 +19,14 @@ const BLOCKS = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
 const SPARK_CHARS = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
 const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const HEATMAP_WEEKS = 16;
+
+type SortMode = "count" | "alpha" | "recent";
+const SORT_LABELS: Record<SortMode, string> = {
+  count: "by count",
+  alpha: "a-z",
+  recent: "by recent",
+};
+const SORT_CYCLE: SortMode[] = ["count", "alpha", "recent"];
 
 function outExpo(t: number): number {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
@@ -30,8 +39,8 @@ function outBack(t: number): number {
 
 function lerpHex(a: string, b: string, t: number): string {
   const p = (s: string, o: number) => parseInt(s.slice(o, o + 2), 16);
-  const mix = (ao: number, bo: number) => Math.round(p(a, ao) + (p(b, ao) - p(a, ao)) * t);
-  const r = mix(1, 1), g = mix(3, 3), bl = mix(5, 5);
+  const mix = (ao: number) => Math.round(p(a, ao) + (p(b, ao) - p(a, ao)) * t);
+  const r = mix(1), g = mix(3), bl = mix(5);
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
 
@@ -53,6 +62,18 @@ function drawBar(buf: OptimizedBuffer, x: number, y: number, width: number, fg: 
   const frac = Math.round((width - full) * 8);
   for (let i = 0; i < full; i++) buf.setCell(x + i, y, "█", fg, bg);
   if (frac > 0) buf.setCell(x + full, y, BLOCKS[frac]!, fg, bg);
+}
+
+function sortSkills(skills: SkillCount[], mode: SortMode): SkillCount[] {
+  const copy = [...skills];
+  switch (mode) {
+    case "count":
+      return copy.sort((a, b) => b.count - a.count);
+    case "alpha":
+      return copy.sort((a, b) => a.skill.localeCompare(b.skill));
+    case "recent":
+      return copy.sort((a, b) => b.lastUsed.getTime() - a.lastUsed.getTime());
+  }
 }
 
 function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: number } {
@@ -94,11 +115,19 @@ export async function run(providers: Provider[]) {
   }
   allCalls.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  const skills = skillCounts(allCalls);
+  const allSkills = skillCounts(allCalls);
   const weekly = weeklyCounts(allCalls, 30);
   const uniqueProjects = new Set(allCalls.map((c) => c.project)).size;
   const { grid: heatGrid, maxVal: heatMax } = buildHeatmapGrid(allCalls);
   const recentCalls = allCalls.slice(0, 20);
+
+  // --- mutable state ---
+  const state = {
+    sortMode: "count" as SortMode,
+    skills: sortSkills(allSkills, "count"),
+    scroll: 0,
+    visibleRows: 0,
+  };
 
   const startTime = Date.now();
   const barStagger = 70;
@@ -137,7 +166,7 @@ export async function run(providers: Provider[]) {
       // === STATS ROW ===
       Box(
         { flexDirection: "row", paddingX: 2, gap: 1, height: 3 },
-        ...makeStatCards(allCalls.length, skills.length, uniqueProjects, sourceNames.size),
+        ...makeStatCards(allCalls.length, allSkills.length, uniqueProjects, sourceNames.size),
       ),
 
       // === MAIN ===
@@ -150,6 +179,7 @@ export async function run(providers: Provider[]) {
 
           // bar chart
           Box({
+            id: "bars",
             flexGrow: 1,
             border: true,
             borderStyle: "rounded",
@@ -164,15 +194,21 @@ export async function run(providers: Provider[]) {
               const ch = this.height - 2;
               if (cw < 10 || ch < 1) return;
 
+              state.visibleRows = ch;
+              const { skills: sorted, scroll } = state;
+              const total = sorted.length;
+              const maxScroll = Math.max(0, total - ch);
+              if (state.scroll > maxScroll) state.scroll = maxScroll;
+
               const labelW = Math.min(22, Math.floor(cw * 0.35));
               const countW = 4;
               const barMaxW = cw - labelW - countW - 3;
               if (barMaxW <= 0) return;
-              const maxCount = skills[0]?.count ?? 1;
-              const visible = Math.min(skills.length, ch);
+              const maxCount = sorted.reduce((m, s) => Math.max(m, s.count), 1);
+              const visible = Math.min(total - scroll, ch);
 
               for (let i = 0; i < visible; i++) {
-                const s = skills[i]!;
+                const s = sorted[scroll + i]!;
                 const elapsed = now - startTime - i * barStagger;
                 const t = Math.max(0, Math.min(1, elapsed / 1200));
                 const progress = outBack(t);
@@ -181,8 +217,9 @@ export async function run(providers: Provider[]) {
                   ? s.skill.slice(0, labelW - 1) + "…"
                   : s.skill.padEnd(labelW);
                 const barW = Math.max(0, (s.count / maxCount) * barMaxW * progress);
-                const color = barColors[i % barColors.length]!;
-                const hex = barPalette[i % barPalette.length]!;
+                const colorIdx = (scroll + i) % barColors.length;
+                const color = barColors[colorIdx]!;
+                const hex = barPalette[colorIdx]!;
                 const dimColor = RGBA.fromHex(lerpHex(hex, "#0D1117", 0.78));
 
                 buf.drawText(name, ox + 1, oy + i, t > 0 ? colors.textMuted : colors.textDim, colors.bg);
@@ -195,12 +232,27 @@ export async function run(providers: Provider[]) {
 
                 buf.drawText(
                   String(s.count).padStart(countW),
-                  ox + cw - countW - 1,
-                  oy + i,
-                  t > 0.5 ? color : colors.textDim,
-                  colors.bg,
+                  ox + cw - countW - 1, oy + i,
+                  t > 0.5 ? color : colors.textDim, colors.bg,
                 );
               }
+
+              // scroll indicators
+              if (scroll > 0) {
+                buf.drawText("▲", ox + cw - 1, oy, colors.accent, colors.bg);
+              }
+              if (scroll + ch < total) {
+                buf.drawText("▼", ox + cw - 1, oy + ch - 1, colors.accent, colors.bg);
+              }
+
+              // sort mode + position in bottom title
+              const sortLabel = SORT_LABELS[state.sortMode];
+              const posLabel = total > ch
+                ? ` ${scroll + 1}-${Math.min(scroll + ch, total)}/${total} `
+                : "";
+              const bottomStr = ` ${sortLabel}${posLabel}`;
+              this.bottomTitle = bottomStr;
+              this.bottomTitleAlignment = "right";
             },
           }),
 
@@ -322,7 +374,7 @@ export async function run(providers: Provider[]) {
 
               for (let i = 0; i < visible; i++) {
                 const c = recentCalls[i]!;
-                const skillIdx = skills.findIndex((s) => s.skill === c.skill);
+                const skillIdx = allSkills.findIndex((s) => s.skill === c.skill);
                 const dotColor = RGBA.fromHex(
                   barPalette[skillIdx >= 0 ? skillIdx % barPalette.length : 0]!,
                 );
@@ -349,8 +401,12 @@ export async function run(providers: Provider[]) {
 
       // === FOOTER ===
       Box(
-        { height: 1, paddingX: 2, flexDirection: "row" },
-        Text({ content: "  q quit   r refresh", fg: "#484F58" }),
+        { id: "footer", height: 1, paddingX: 2, flexDirection: "row" },
+        Text({
+          id: "footer-text",
+          content: "  q quit  r refresh  s sort  ↑↓/jk scroll",
+          fg: "#484F58",
+        }),
       ),
     ),
   );
@@ -367,18 +423,72 @@ export async function run(providers: Provider[]) {
     }
   });
 
-  renderer.root.focusable = true;
-  renderer.root.focus();
-  renderer.root.onKeyDown = (key) => {
-    if (key.key === "q") {
-      renderer.destroy();
-      process.exit(0);
+  // --- keyboard ---
+  renderer.keyInput.on("keypress", (key) => {
+    const maxScroll = Math.max(0, state.skills.length - state.visibleRows);
+
+    switch (key.name) {
+      case "q":
+      case "escape":
+        renderer.destroy();
+        process.exit(0);
+        break;
+
+      case "r":
+        renderer.destroy();
+        run(providers);
+        break;
+
+      case "s": {
+        const idx = SORT_CYCLE.indexOf(state.sortMode);
+        state.sortMode = SORT_CYCLE[(idx + 1) % SORT_CYCLE.length]!;
+        state.skills = sortSkills(allSkills, state.sortMode);
+        state.scroll = 0;
+        renderer.requestRender();
+        break;
+      }
+
+      case "j":
+      case "down":
+        if (state.scroll < maxScroll) {
+          state.scroll++;
+          renderer.requestRender();
+        }
+        break;
+
+      case "k":
+      case "up":
+        if (state.scroll > 0) {
+          state.scroll--;
+          renderer.requestRender();
+        }
+        break;
+
+      case "g":
+        state.scroll = 0;
+        renderer.requestRender();
+        break;
+
+      case "G":
+        state.scroll = maxScroll;
+        renderer.requestRender();
+        break;
+
+      case "d":
+        if (key.ctrl) {
+          state.scroll = Math.min(maxScroll, state.scroll + Math.floor(state.visibleRows / 2));
+          renderer.requestRender();
+        }
+        break;
+
+      case "u":
+        if (key.ctrl) {
+          state.scroll = Math.max(0, state.scroll - Math.floor(state.visibleRows / 2));
+          renderer.requestRender();
+        }
+        break;
     }
-    if (key.key === "r") {
-      renderer.destroy();
-      run(providers);
-    }
-  };
+  });
 }
 
 function makeStatCards(
