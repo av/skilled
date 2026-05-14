@@ -1,0 +1,15 @@
+[project]
+name = "skilled"
+version = "0.1.0"
+description = "TUI dashboard for skill usage stats across AI coding tools"
+requires-python = ">=3.12"
+dependencies = [
+    "textual>=3.0",
+]
+
+[project.scripts]
+skilled = "skilled.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
