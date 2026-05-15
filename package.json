@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "bun run src/main.ts"
+    "start": "bun run src/main.ts",
+    "build": "bun build --compile src/main.ts --outfile skilled"
   },
   "bin": {
     "skilled": "src/main.ts"

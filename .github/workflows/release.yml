@@ -1,0 +1,153 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            os: ubuntu-latest
+            artifact: skilled-linux-amd64
+          - platform: linux-arm64
+            os: ubuntu-24.04-arm
+            artifact: skilled-linux-arm64
+          - platform: darwin-amd64
+            os: macos-13
+            artifact: skilled-darwin-amd64
+          - platform: darwin-arm64
+            os: macos-latest
+            artifact: skilled-darwin-arm64
+          - platform: windows-amd64
+            os: windows-latest
+            artifact: skilled-windows-amd64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun build --compile src/main.ts --outfile skilled
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: tar czf ${{ matrix.artifact }}.tar.gz skilled
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: 7z a ${{ matrix.artifact }}.zip skilled.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.*
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+
+  publish-npm:
+    name: Publish to NPM
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd npm
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Prepare README
+        if: hashFiles('README.md') != ''
+        run: |
+          cp README.md npm/README.md
+          sed -i '/github\.com\/user-attachments\/assets/d' npm/README.md
+          sed -i 's|src="assets/|src="https://raw.githubusercontent.com/av/skilled/main/assets/|g' npm/README.md
+
+      - name: Publish
+        run: npm publish --access public --provenance
+        working-directory: npm
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd pypi
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          sed -i "s/^VERSION = .*/VERSION = \"$VERSION\"/" setup.py
+
+      - name: Prepare README
+        if: hashFiles('README.md') != ''
+        run: |
+          cp README.md pypi/README.md
+          sed -i '/github\.com\/user-attachments\/assets/d' pypi/README.md
+          sed -i 's|src="assets/|src="https://raw.githubusercontent.com/av/skilled/main/assets/|g' pypi/README.md
+
+      - name: Build sdist
+        run: python -m build --sdist
+        working-directory: pypi
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pypi/dist/

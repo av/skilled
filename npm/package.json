@@ -1,0 +1,45 @@
+{
+  "name": "@avcodes/skilled",
+  "version": "0.1.0",
+  "description": "TUI dashboard for skill usage stats across AI coding tools",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/av/skilled.git"
+  },
+  "homepage": "https://github.com/av/skilled",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "bin": {
+    "skilled": "bin/skilled"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "install.js",
+    "bin/"
+  ],
+  "keywords": [
+    "skilled",
+    "tui",
+    "cli",
+    "coding-agents",
+    "skill-usage",
+    "dashboard"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=14"
+  }
+}

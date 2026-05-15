@@ -1,2 +1,4 @@
 node_modules/
 bun.lock
+skilled
+dist/
