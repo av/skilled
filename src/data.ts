@@ -37,16 +37,10 @@ export function dailyCounts(calls: SkillCall[]): DayCount[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function weeklyCounts(calls: SkillCall[], weeks: number): number[] {
-  const now = new Date();
-  const result = new Array(weeks).fill(0);
-
+export function hourlyCounts(calls: SkillCall[]): number[] {
+  const result = new Array(24).fill(0);
   for (const c of calls) {
-    const diffMs = now.getTime() - c.timestamp.getTime();
-    const weekIdx = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-    if (weekIdx >= 0 && weekIdx < weeks) {
-      result[weeks - 1 - weekIdx]++;
-    }
+    result[c.timestamp.getHours()]++;
   }
   return result;
 }
@@ -67,4 +61,119 @@ export function timeAgo(date: Date): string {
   if (days < 30) return `${days}d`;
   const months = Math.floor(days / 30);
   return `${months}mo`;
+}
+
+export interface SkillDetail {
+  skill: string;
+  count: number;
+  sessions: number;
+  firstUsed: Date;
+  lastUsed: Date;
+  projects: { name: string; count: number }[];
+  weeklyUsage: number[];
+}
+
+export function skillDetail(calls: SkillCall[], skillName: string): SkillDetail {
+  const filtered = calls.filter(c => c.skill === skillName);
+  if (filtered.length === 0) {
+    return { skill: skillName, count: 0, sessions: 0, firstUsed: new Date(), lastUsed: new Date(), projects: [], weeklyUsage: new Array(16).fill(0) };
+  }
+
+  const sessions = new Set<string>();
+  let firstUsed = filtered[0]!.timestamp;
+  let lastUsed = filtered[0]!.timestamp;
+  const projCounts = new Map<string, number>();
+
+  for (const c of filtered) {
+    sessions.add(c.sessionId);
+    if (c.timestamp < firstUsed) firstUsed = c.timestamp;
+    if (c.timestamp > lastUsed) lastUsed = c.timestamp;
+    const name = projectShort(c.project);
+    projCounts.set(name, (projCounts.get(name) ?? 0) + 1);
+  }
+
+  const projects = [...projCounts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const now = Date.now();
+  const weeklyUsage = new Array(16).fill(0) as number[];
+  for (const c of filtered) {
+    const weeksAgo = Math.floor((now - c.timestamp.getTime()) / (7 * 86400000));
+    const idx = 15 - weeksAgo;
+    if (idx >= 0 && idx < 16) weeklyUsage[idx]!++;
+  }
+
+  return { skill: skillName, count: filtered.length, sessions: sessions.size, firstUsed, lastUsed, projects, weeklyUsage };
+}
+
+export interface SkillAudit {
+  stale: SkillCount[];
+  oneOff: SkillCount[];
+  declining: { skill: SkillCount; recentCount: number; priorCount: number }[];
+  rising: { skill: SkillCount; recentCount: number; priorCount: number }[];
+  heavyHitters: { skill: SkillCount; share: number }[];
+  crossProject: SkillCount[];
+  singleProject: SkillCount[];
+}
+
+export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudit {
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 86400000;
+  const fourWeeksAgo = now - 28 * 86400000;
+  const eightWeeksAgo = now - 56 * 86400000;
+
+  const stale = skills.filter(s => s.lastUsed.getTime() < thirtyDaysAgo);
+  const oneOff = skills.filter(s => s.count === 1);
+
+  const recentCounts = new Map<string, number>();
+  const priorCounts = new Map<string, number>();
+  for (const c of calls) {
+    const t = c.timestamp.getTime();
+    if (t >= fourWeeksAgo) {
+      recentCounts.set(c.skill, (recentCounts.get(c.skill) ?? 0) + 1);
+    } else if (t >= eightWeeksAgo) {
+      priorCounts.set(c.skill, (priorCounts.get(c.skill) ?? 0) + 1);
+    }
+  }
+
+  const declining = skills
+    .filter(s => {
+      const recent = recentCounts.get(s.skill) ?? 0;
+      const prior = priorCounts.get(s.skill) ?? 0;
+      return prior > 0 && recent < prior * 0.5;
+    })
+    .map(s => ({
+      skill: s,
+      recentCount: recentCounts.get(s.skill) ?? 0,
+      priorCount: priorCounts.get(s.skill) ?? 0,
+    }));
+
+  const rising = skills
+    .filter(s => {
+      const recent = recentCounts.get(s.skill) ?? 0;
+      const prior = priorCounts.get(s.skill) ?? 0;
+      return prior > 0 && recent >= prior * 1.5;
+    })
+    .map(s => ({
+      skill: s,
+      recentCount: recentCounts.get(s.skill) ?? 0,
+      priorCount: priorCounts.get(s.skill) ?? 0,
+    }));
+
+  const totalCalls = skills.reduce((sum, s) => sum + s.count, 0);
+  const heavyHitters = [...skills]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map(s => ({ skill: s, share: totalCalls > 0 ? s.count / totalCalls : 0 }));
+
+  const crossProject = skills
+    .filter(s => s.projects >= 3)
+    .sort((a, b) => b.projects - a.projects);
+
+  const singleProject = skills
+    .filter(s => s.projects === 1)
+    .sort((a, b) => b.count - a.count);
+
+  return { stale, oneOff, declining, rising, heavyHitters, crossProject, singleProject };
 }

@@ -6,31 +6,31 @@ export const colors = {
   surfaceLight: RGBA.fromHex("#1C2333"),
   border: RGBA.fromHex("#30363D"),
   borderBright: RGBA.fromHex("#484F58"),
-  text: RGBA.fromHex("#E6EDF3"),
-  textMuted: RGBA.fromHex("#8B949E"),
-  textDim: RGBA.fromHex("#484F58"),
-  accent: RGBA.fromHex("#58A6FF"),
+  text: RGBA.fromHex("#D4EDE5"),
+  textMuted: RGBA.fromHex("#7A9E94"),
+  textDim: RGBA.fromHex("#3D5C52"),
+  accent: RGBA.fromHex("#50AE90"),
   transparent: RGBA.fromValues(0, 0, 0, 0),
 };
 
 export const barPalette = [
-  "#FF6B6B", "#FBBF24", "#34D399", "#60A5FA",
-  "#A78BFA", "#F472B6", "#FB923C", "#2DD4BF",
-  "#818CF8", "#E879F9", "#F87171", "#4ADE80",
-  "#38BDF8", "#C084FC",
+  "#50AE90", "#C49058", "#8EBE6E", "#D48E6E",
+  "#5EB8B0", "#C4A850", "#78AE78", "#C88880",
+  "#50A0A8", "#D4A870", "#8AAE58", "#B07868",
+  "#68B898", "#A89050",
 ];
 
 export const barColors = barPalette.map((h) => RGBA.fromHex(h));
 
-export const heatmapPalette = ["#161B22", "#0E4429", "#006D32", "#26A641", "#39D353"];
+export const heatmapPalette = ["#161B22", "#103328", "#20614D", "#3D9478", "#50AE90"];
 export const heatmapColors = heatmapPalette.map((h) => RGBA.fromHex(h));
 
 export const rainbowHex = [
-  "#FF6B6B", "#FF9F43", "#FBBF24", "#34D399",
-  "#60A5FA", "#A78BFA", "#F472B6",
+  "#50AE90", "#C49058", "#8EBE6E", "#D48E6E",
+  "#5EB8B0", "#C4A850", "#78AE78",
 ];
 
 export const sparkColors = {
-  bar: RGBA.fromHex("#58A6FF"),
-  barDim: RGBA.fromHex("#1F3A5F"),
+  bar: RGBA.fromHex("#50AE90"),
+  barDim: RGBA.fromHex("#1A3D34"),
 };

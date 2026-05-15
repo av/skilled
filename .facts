@@ -1,0 +1,81 @@
+# project
+
+- label: runtime is Bun
+  command: grep -q 'lockfileVersion' bun.lock
+- label: TUI dashboard for skill usage stats across AI coding tools
+  command: grep -q 'skill usage stats' package.json
+- label: written in TypeScript with strict mode enabled
+  command: grep -q '"strict": true' tsconfig.json
+- label: ES module project (type: module)
+  command: grep -q '"type": "module"' package.json
+- label: uses for TUI rendering
+  command: grep -q '@opentui/core' package.json
+  tags: [opentui/core]
+- label: entry point is src/main.ts, exposed as 'skilled' bin command
+  command: test -f src/main.ts && grep -q '"skilled"' package.json
+- label: no build step — runs directly via bun (noEmit: true in tsconfig)
+  command: grep -q '"noEmit": true' tsconfig.json
+- no test suite
+- label: only runtime dependency is
+  command: jq -e '.dependencies | keys == ["@opentui/core"]' package.json >/dev/null
+  tags: [opentui/core]
+
+# architecture
+- label: provider pattern: providers implement Provider interface (name, available, collect)
+  command: grep -q 'interface Provider' src/providers/base.ts
+- label: single provider: ClaudeCodeProvider reads ~/.claude/history.jsonl
+  command: grep -q 'ClaudeCodeProvider' src/providers/claude-code.ts
+- label: app.ts run() accepts Provider[] and renders the full TUI
+  command: grep -q 'providers: Provider\[\]' src/app.ts
+- data flow: Provider.collect() → aggregation (data.ts) → TUI (app.ts)
+
+# data
+- label: three core types: SkillCall, SkillCount, DayCount (defined in models.ts)
+  command: grep -q 'SkillCall' src/models.ts && grep -q 'SkillCount' src/models.ts && grep -q 'DayCount' src/models.ts
+- label: SkillCall captures: skill, timestamp, project, sessionId, source
+  command: grep -q 'sessionId' src/models.ts && grep -q 'source: string' src/models.ts
+- label: aggregation functions: skillCounts, dailyCounts, weeklyCounts (data.ts)
+  command: grep -q 'export function skillCounts' src/data.ts && grep -q 'export function dailyCounts' src/data.ts && grep -q 'export function weeklyCounts' src/data.ts
+
+# provider
+
+## claude-code
+- label: skill names extracted from display field via regex /^\/([a-zA-Z][a-zA-Z0-9_-]*)$/
+  command: grep -q 'a-zA-Z.*a-zA-Z0-9_' src/providers/claude-code.ts
+- label: builtin commands (clear, model, usage, help, etc.) are filtered out
+  command: grep -q 'BUILTINS' src/providers/claude-code.ts
+- label: malformed JSON lines in history are silently skipped
+  command: grep -q 'catch' src/providers/claude-code.ts
+
+# ui
+- full-screen TUI: header, stats row, left/right panels, footer
+- label: header renders animated Perlin noise background with blocky pixel font
+  command: grep -q 'fbm' src/app.ts && grep -q 'PIXEL_FONT' src/app.ts
+- label: stats cards show: CALLS, SKILLS, PROJECTS, SOURCES
+  command: grep -q 'CALLS' src/app.ts && grep -q 'SKILLS' src/app.ts && grep -q 'PROJECTS' src/app.ts && grep -q 'SOURCES' src/app.ts
+- left panel: skill frequency bar chart + weekly sparkline
+- label: right panel: 16-week activity heatmap + recent activity log
+  command: grep -q 'WEEKS.*=.*16' src/app.ts
+- label: staggered animations on bars, sparkline, and heatmap cells
+  command: grep -q 'barStagger' src/app.ts && grep -q 'outBack' src/app.ts
+- label: Perlin noise implementation with fractional Brownian motion (fbm) in noise.ts
+  command: grep -q 'export function fbm' src/noise.ts
+
+## interaction
+- label: three sort modes: by count, alphabetical, recent (cycled with 's')
+  command: grep -q 'count.*alpha.*recent\|sortMode' src/app.ts
+- keyboard: q/esc quit, r refresh, s sort, j/k scroll, g/G top/bottom, ctrl+d/u page
+
+## theme
+- label: GitHub-inspired dark mode theme with 14-color bar palette and 5-level green heatmap
+  command: test -f src/theme.ts
+
+# ui > interaction
+- tab key toggles sort direction between ascending and descending @implemented
+- bar chart bottom title shows ▲/▼ indicator next to sort mode label @implemented
+
+# ui > analytics
+- enter key on bar chart opens skill detail panel replacing right column @implemented
+- skill detail panel shows per-project usage breakdown, session count, first/last used dates, and weekly usage sparkline @implemented
+- 'a' key toggles audit view replacing main layout with library health insights @implemented
+- audit view shows: stale skills (unused 30+ days), one-off skills (used once), declining skills (usage dropped 50%+ over last 4 weeks vs prior 4) @implemented
