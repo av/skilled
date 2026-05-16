@@ -37,6 +37,14 @@ detect_platform() {
       ;;
   esac
 
+  if [ "$platform" = "darwin" ] && [ "$arch" = "amd64" ]; then
+    echo "Error: Intel Mac (darwin-amd64) prebuilt binaries are not available." >&2
+    echo "Options:" >&2
+    echo "  - Use an Apple Silicon Mac (arm64)" >&2
+    echo "  - Install from source: git clone https://github.com/${REPO} && cd skilled && bun run build" >&2
+    exit 1
+  fi
+
   echo "${platform}-${arch}"
 }
 

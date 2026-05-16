@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skilled"
-version = "0.1.0"
+version = "0.3.0"
 description = "TUI dashboard for skill usage stats across AI coding tools"
 license = "MIT"
 requires-python = ">=3.8"

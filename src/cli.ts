@@ -324,17 +324,17 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
 
   const limit = cli.limit ?? 10;
 
-  section("Most Used (last 4w)", audit.mostUsed.map(h => ({
+  section("Most Used (last 4w)", audit.mostUsed.slice(0, limit).map(h => ({
     skill: h.skill.skill,
     detail: `${Math.round(h.share * 100)}%   ${h.skill.count} calls   ${h.skill.projects} proj`,
   })));
 
-  section("Rising (↑50%+ last 4w)", audit.rising.map(r => ({
+  section("Rising (↑50%+ last 4w)", audit.rising.slice(0, limit).map(r => ({
     skill: r.skill.skill,
     detail: `${r.priorCount} → ${r.recentCount}   ↑${r.pct}%`,
   })));
 
-  section("Declining (↓50%+ last 4w)", audit.declining.map(d => ({
+  section("Declining (↓50%+ last 4w)", audit.declining.slice(0, limit).map(d => ({
     skill: d.skill.skill,
     detail: `${d.priorCount} → ${d.recentCount}   ↓${d.pct}%`,
   })));
@@ -349,12 +349,12 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
     detail: `${s.count} calls`,
   })));
 
-  section("Stale (28+ days)", audit.stale.map(s => ({
+  section("Stale (28+ days)", audit.stale.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `last used ${timeAgo(s.lastUsed)} ago`,
   })));
 
-  section("One-Off", audit.oneOff.map(s => ({
+  section("One-Off", audit.oneOff.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `used once, ${timeAgo(s.lastUsed)} ago`,
   })));

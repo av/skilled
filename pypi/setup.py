@@ -17,7 +17,7 @@ from setuptools.command.build_py import build_py
 
 REPO = "av/skilled"
 BINARY = "skilled"
-VERSION = "0.1.0"
+VERSION = "0.3.0"
 
 PLATFORM_MAP = {
     "Linux": "linux",
@@ -49,6 +49,14 @@ def get_artifact_info():
         raise RuntimeError(
             f"Unsupported architecture: {machine}. "
             f"Supported: {', '.join(ARCH_MAP.keys())}"
+        )
+
+    if plat == "darwin" and arch == "amd64":
+        raise RuntimeError(
+            "Intel Mac (darwin-amd64) prebuilt binaries are not available.\n"
+            "Options:\n"
+            "  - Use an Apple Silicon Mac (arm64)\n"
+            "  - Install from source: git clone https://github.com/av/skilled && cd skilled && bun run build"
         )
 
     artifact = f"{BINARY}-{plat}-{arch}"

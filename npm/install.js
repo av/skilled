@@ -41,6 +41,15 @@ function getPlatformArtifact() {
     );
   }
 
+  if (platform === "darwin" && arch === "amd64") {
+    throw new Error(
+      "Intel Mac (darwin-amd64) prebuilt binaries are not available.\n" +
+      "Options:\n" +
+      "  - Use an Apple Silicon Mac (arm64)\n" +
+      "  - Install from source: git clone https://github.com/av/skilled && cd skilled && bun run build"
+    );
+  }
+
   const artifact = `${BINARY}-${platform}-${arch}`;
   const ext = platform === "windows" ? "zip" : "tar.gz";
   return { artifact, ext, platform };
