@@ -12,7 +12,7 @@ const BUILTINS = new Set([
   "help", "memory", "clear", "exit",
 ]);
 
-const COMMAND_NAME_RE = /<command-name>([^<]+)<\/command-name>/;
+const COMMAND_NAME_RE = /<command-name>([^<]+)<\/command-name>/g;
 
 export class GrokProvider implements Provider {
   readonly name = "Grok CLI";
@@ -76,23 +76,22 @@ export class GrokProvider implements Provider {
           if (!msgContent || msgContent.type !== "text") continue;
 
           const text: string = msgContent.text ?? "";
-          const match = text.match(COMMAND_NAME_RE);
-          if (!match) continue;
+          for (const m of text.matchAll(COMMAND_NAME_RE)) {
+            const skill = m[1]!;
+            if (BUILTINS.has(skill)) continue;
 
-          const skill = match[1]!;
-          if (BUILTINS.has(skill)) continue;
+            const ts = record.timestamp
+              ? new Date(record.timestamp * 1000)
+              : new Date(0);
 
-          const ts = record.timestamp
-            ? new Date(record.timestamp * 1000)
-            : new Date(0);
-
-          calls.push({
-            skill,
-            timestamp: ts,
-            project,
-            sessionId: params.sessionId ?? sessionDir,
-            source: this.name,
-          });
+            calls.push({
+              skill,
+              timestamp: ts,
+              project,
+              sessionId: params.sessionId ?? sessionDir,
+              source: this.name,
+            });
+          }
         }
       }
     }

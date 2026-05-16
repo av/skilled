@@ -107,32 +107,30 @@ pub fn collect(home: &str) -> ProviderResult {
                 }
 
                 let text = msg_content["text"].as_str().unwrap_or("");
-                let caps = match cmd_re.captures(text) {
-                    Some(c) => c,
-                    None => continue,
-                };
-                let skill = &caps[1];
-                if builtins.contains(skill) {
-                    continue;
+                for caps in cmd_re.captures_iter(text) {
+                    let skill = &caps[1];
+                    if builtins.contains(skill) {
+                        continue;
+                    }
+
+                    // Grok timestamps are in seconds, convert to milliseconds
+                    let ts = record["timestamp"]
+                        .as_f64()
+                        .map(|f| (f * 1000.0) as i64)
+                        .or_else(|| record["timestamp"].as_i64().map(|n| n * 1000))
+                        .unwrap_or(0);
+
+                    calls.push(SkillCall {
+                        skill: skill.to_string(),
+                        timestamp_ms: ts,
+                        project: project.clone(),
+                        session_id: record["params"]["sessionId"]
+                            .as_str()
+                            .unwrap_or(&session_dir_name)
+                            .to_string(),
+                        source: SOURCE.into(),
+                    });
                 }
-
-                // Grok timestamps are in seconds, convert to milliseconds
-                let ts = record["timestamp"]
-                    .as_f64()
-                    .map(|f| (f * 1000.0) as i64)
-                    .or_else(|| record["timestamp"].as_i64().map(|n| n * 1000))
-                    .unwrap_or(0);
-
-                calls.push(SkillCall {
-                    skill: skill.to_string(),
-                    timestamp_ms: ts,
-                    project: project.clone(),
-                    session_id: record["params"]["sessionId"]
-                        .as_str()
-                        .unwrap_or(&session_dir_name)
-                        .to_string(),
-                    source: SOURCE.into(),
-                });
             }
         }
     }

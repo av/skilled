@@ -217,9 +217,12 @@ fn parse_session_file(
 }
 
 pub fn parse_iso_ms(s: &str) -> Option<i64> {
-    // Minimal ISO 8601 parser: "2026-05-15T20:43:17.000Z" -> unix ms
-    let s = s.trim_end_matches('Z');
-    let (date, time) = s.split_once('T')?;
+    // Minimal ISO 8601 parser supporting:
+    //   "2026-05-15T20:43:17.000Z"
+    //   "2026-05-15T20:43:17.000+02:00"
+    //   "2026-05-15T20:43:17.000-05:30"
+
+    let (date, time_with_tz) = s.split_once('T')?;
     let parts: Vec<&str> = date.split('-').collect();
     if parts.len() != 3 {
         return None;
@@ -228,7 +231,11 @@ pub fn parse_iso_ms(s: &str) -> Option<i64> {
     let month: i64 = parts[1].parse().ok()?;
     let day: i64 = parts[2].parse().ok()?;
 
-    let time_parts: Vec<&str> = time.split(':').collect();
+    // Separate the time portion from the timezone offset.
+    // Possible formats: "20:43:17.000Z", "20:43:17.000+02:00", "20:43:17.000-05:30", "20:43:17"
+    let (time_str, tz_offset_ms) = strip_tz_offset(time_with_tz);
+
+    let time_parts: Vec<&str> = time_str.split(':').collect();
     if time_parts.len() != 3 {
         return None;
     }
@@ -253,5 +260,99 @@ pub fn parse_iso_ms(s: &str) -> Option<i64> {
     let m = if month <= 2 { month + 9 } else { month - 3 };
     let days = 365 * y + y / 4 - y / 100 + y / 400 + (m * 306 + 5) / 10 + day - 1 - 719468;
     let total_secs = days * 86400 + hour * 3600 + min * 60 + sec_int;
-    Some(total_secs * 1000 + millis)
+    Some(total_secs * 1000 + millis - tz_offset_ms)
+}
+
+/// Strip timezone suffix from a time string and return (time_without_tz, offset_in_ms).
+/// Handles "Z", "+HH:MM", "-HH:MM", "+HHMM", "-HHMM", or no suffix (assumed UTC).
+fn strip_tz_offset(time: &str) -> (&str, i64) {
+    // Trailing Z
+    if let Some(t) = time.strip_suffix('Z') {
+        return (t, 0);
+    }
+
+    // Look for +/- offset. The offset is always at least 5 chars from the end (+HH:MM or +HHMM).
+    // We search for the last '+' or '-' that isn't at position 0 and is after the seconds portion.
+    let offset_pos = time.rfind('+').or_else(|| {
+        // rfind('-') but only if it's after the time digits (position > 5 typically HH:MM:SS)
+        let pos = time.rfind('-')?;
+        // Ensure this isn't part of fractional seconds by checking it's after seconds
+        if pos >= 8 { Some(pos) } else { None }
+    });
+
+    if let Some(pos) = offset_pos {
+        // Validate that what comes after is a timezone offset, not part of time
+        // Offset chars should be: sign + 2-digit hour + optional colon + 2-digit minute
+        let sign_char = time.as_bytes()[pos];
+        let offset_str = &time[pos + 1..];
+        let (oh, om) = if offset_str.contains(':') {
+            let offset_parts: Vec<&str> = offset_str.split(':').collect();
+            if offset_parts.len() != 2 { return (time, 0); }
+            let oh: i64 = match offset_parts[0].parse() { Ok(v) => v, Err(_) => return (time, 0) };
+            let om: i64 = match offset_parts[1].parse() { Ok(v) => v, Err(_) => return (time, 0) };
+            (oh, om)
+        } else if offset_str.len() == 4 {
+            let oh: i64 = match offset_str[..2].parse() { Ok(v) => v, Err(_) => return (time, 0) };
+            let om: i64 = match offset_str[2..].parse() { Ok(v) => v, Err(_) => return (time, 0) };
+            (oh, om)
+        } else {
+            return (time, 0);
+        };
+
+        let sign: i64 = if sign_char == b'+' { 1 } else { -1 };
+        let offset_ms = sign * (oh * 3600 + om * 60) * 1000;
+        return (&time[..pos], offset_ms);
+    }
+
+    // No timezone info — assume UTC
+    (time, 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_iso_ms_z_suffix() {
+        let result = parse_iso_ms("2026-05-15T20:43:17.000Z");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), 1_778_877_797_000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_positive_offset() {
+        let z = parse_iso_ms("2026-05-15T20:43:17.000Z").unwrap();
+        let plus2 = parse_iso_ms("2026-05-15T20:43:17.000+02:00").unwrap();
+        // +02:00 wall clock is 2h ahead of UTC, so UTC time is 2h earlier
+        assert_eq!(z - plus2, 2 * 3600 * 1000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_negative_offset() {
+        let z = parse_iso_ms("2026-05-15T20:43:17.000Z").unwrap();
+        let neg530 = parse_iso_ms("2026-05-15T20:43:17.000-05:30").unwrap();
+        // -05:30 wall clock is 5h30m behind UTC, so UTC time is 5h30m later
+        assert_eq!(neg530 - z, (5 * 3600 + 30 * 60) * 1000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_no_suffix() {
+        let z = parse_iso_ms("2026-05-15T20:43:17.000Z").unwrap();
+        let none = parse_iso_ms("2026-05-15T20:43:17.000").unwrap();
+        assert_eq!(z, none);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_no_fractional() {
+        let result = parse_iso_ms("2026-05-15T20:43:17Z");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), 1_778_877_797_000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_compact_offset() {
+        let colon = parse_iso_ms("2026-05-15T20:43:17.000+02:00").unwrap();
+        let compact = parse_iso_ms("2026-05-15T20:43:17.000+0200").unwrap();
+        assert_eq!(colon, compact);
+    }
 }
