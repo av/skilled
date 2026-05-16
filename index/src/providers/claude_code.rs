@@ -4,6 +4,7 @@ use std::path::Path;
 
 use regex::Regex;
 use serde_json::Value;
+use walkdir::WalkDir;
 
 use crate::model::{ProviderResult, SkillCall};
 
@@ -98,17 +99,20 @@ fn collect_projects(
             continue;
         }
 
-        let files = match fs::read_dir(&proj_dir) {
-            Ok(f) => f,
-            Err(_) => continue,
-        };
-
-        for file in files.flatten() {
+        // Recursively walk the project directory to find all .jsonl files,
+        // including those in subagent directories (e.g., <session>/subagents/*.jsonl).
+        for file in WalkDir::new(&proj_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
             let path = file.path();
             if path.extension().and_then(|e| e.to_str()) != Some("jsonl") {
                 continue;
             }
-            parse_session_file(&path, builtins, seen, calls);
+            if !path.is_file() {
+                continue;
+            }
+            parse_session_file(path, builtins, seen, calls);
         }
     }
 }

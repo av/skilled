@@ -80,15 +80,24 @@ export class ClaudeCodeProvider implements Provider {
 
     for (const projDir of projectDirs) {
       const projPath = join(PROJECTS_DIR, projDir);
-      let files: string[];
-      try {
-        files = readdirSync(projPath).filter(f => f.endsWith(".jsonl"));
-      } catch {
-        continue;
-      }
+      this.walkJsonlFiles(projPath, calls, seen);
+    }
+  }
 
-      for (const file of files) {
-        this.parseSessionFile(join(projPath, file), calls, seen);
+  private walkJsonlFiles(dir: string, calls: SkillCall[], seen: Set<string>) {
+    let entries: import("fs").Dirent[];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        this.walkJsonlFiles(fullPath, calls, seen);
+      } else if (entry.name.endsWith(".jsonl")) {
+        this.parseSessionFile(fullPath, calls, seen);
       }
     }
   }
