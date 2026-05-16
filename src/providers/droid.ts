@@ -25,7 +25,14 @@ export class DroidProvider implements Provider {
   }
 
   private walkSessions(dir: string, calls: SkillCall[]) {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    let entries: import("fs").Dirent[];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         this.walkSessions(fullPath, calls);
