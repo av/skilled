@@ -71,8 +71,13 @@ export class CodexProvider implements Provider {
       }
 
       if (entry.type === "session_meta") {
-        project = entry.payload?.cwd ?? "";
-        sessionId = entry.payload?.id ?? "";
+        // Only use the first session_meta. Forked (subagent) sessions contain
+        // a second session_meta from the parent which would overwrite the fork's
+        // own ID, causing all forks to report under the parent's session ID.
+        if (!sessionId) {
+          project = entry.payload?.cwd ?? "";
+          sessionId = entry.payload?.id ?? "";
+        }
       }
 
       // Skills appear as <skill><name>X</name> blocks in response_item payloads

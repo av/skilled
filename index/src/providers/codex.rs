@@ -75,8 +75,13 @@ fn parse_session(
 
         match entry["type"].as_str() {
             Some("session_meta") => {
-                project = entry["payload"]["cwd"].as_str().unwrap_or("").to_string();
-                session_id = entry["payload"]["id"].as_str().unwrap_or("").to_string();
+                // Only use the first session_meta. Forked (subagent) sessions contain
+                // a second session_meta from the parent which would overwrite the fork's
+                // own ID, causing all forks to report under the parent's session ID.
+                if session_id.is_empty() {
+                    project = entry["payload"]["cwd"].as_str().unwrap_or("").to_string();
+                    session_id = entry["payload"]["id"].as_str().unwrap_or("").to_string();
+                }
             }
             Some("response_item") => {
                 let content_arr = match entry["payload"]["content"].as_array() {
