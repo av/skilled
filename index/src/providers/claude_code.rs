@@ -98,12 +98,6 @@ fn collect_projects(
             continue;
         }
 
-        let dir_name = entry.file_name().to_string_lossy().to_string();
-        let project = format!(
-            "/{}",
-            dir_name.strip_prefix('-').unwrap_or(&dir_name).replace('-', "/")
-        );
-
         let files = match fs::read_dir(&proj_dir) {
             Ok(f) => f,
             Err(_) => continue,
@@ -114,14 +108,13 @@ fn collect_projects(
             if path.extension().and_then(|e| e.to_str()) != Some("jsonl") {
                 continue;
             }
-            parse_session_file(&path, &project, builtins, seen, calls);
+            parse_session_file(&path, builtins, seen, calls);
         }
     }
 }
 
 fn parse_session_file(
     path: &Path,
-    project: &str,
     builtins: &HashSet<&str>,
     seen: &mut HashSet<String>,
     calls: &mut Vec<SkillCall>,
@@ -137,7 +130,24 @@ fn parse_session_file(
         .unwrap_or("")
         .to_string();
 
+    // Extract project path (cwd) from session entries rather than
+    // decoding the directory name, which is ambiguous when paths contain hyphens.
+    let mut project = String::new();
+
     for line in content.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        // Fast path: extract cwd from any early entry that has it
+        if project.is_empty() && line.contains("\"cwd\"") {
+            if let Ok(entry) = serde_json::from_str::<Value>(line) {
+                if let Some(cwd) = entry["cwd"].as_str() {
+                    project = cwd.to_string();
+                }
+            }
+        }
+
         if !line.contains("\"Skill\"") {
             continue;
         }
@@ -146,6 +156,12 @@ fn parse_session_file(
             Ok(v) => v,
             Err(_) => continue,
         };
+
+        if project.is_empty() {
+            if let Some(cwd) = entry["cwd"].as_str() {
+                project = cwd.to_string();
+            }
+        }
 
         if entry["type"].as_str() != Some("assistant") {
             continue;
@@ -183,10 +199,16 @@ fn parse_session_file(
                 continue;
             }
 
+            let call_project = if project.is_empty() {
+                entry["cwd"].as_str().unwrap_or("").to_string()
+            } else {
+                project.clone()
+            };
+
             calls.push(SkillCall {
                 skill: skill.to_string(),
                 timestamp_ms: ts,
-                project: project.to_string(),
+                project: call_project,
                 session_id: session_id.clone(),
                 source: SOURCE.into(),
             });

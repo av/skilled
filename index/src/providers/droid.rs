@@ -32,22 +32,7 @@ pub fn collect(home: &str) -> ProviderResult {
             continue;
         }
 
-        let parent = path
-            .parent()
-            .unwrap_or(Path::new(""))
-            .to_string_lossy()
-            .to_string();
-        let rel = parent
-            .strip_prefix(&sessions_dir)
-            .unwrap_or("")
-            .trim_start_matches('/');
-        let project = if rel.is_empty() {
-            String::new()
-        } else {
-            format!("/{}", rel.replace('-', "/"))
-        };
-
-        parse_session(path, &project, &active_re, &mut calls);
+        parse_session(path, &active_re, &mut calls);
     }
 
     ProviderResult {
@@ -57,13 +42,14 @@ pub fn collect(home: &str) -> ProviderResult {
     }
 }
 
-fn parse_session(path: &Path, project: &str, active_re: &Regex, calls: &mut Vec<SkillCall>) {
+fn parse_session(path: &Path, active_re: &Regex, calls: &mut Vec<SkillCall>) {
     let content = match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => return,
     };
 
     let mut session_id = String::new();
+    let mut project = String::new();
 
     for line in content.lines() {
         if line.trim().is_empty() {
@@ -77,6 +63,10 @@ fn parse_session(path: &Path, project: &str, active_re: &Regex, calls: &mut Vec<
 
         if entry["type"].as_str() == Some("session_start") {
             session_id = entry["id"].as_str().unwrap_or("").to_string();
+            // Extract project path from session metadata
+            if let Some(cwd) = entry["cwd"].as_str() {
+                project = cwd.to_string();
+            }
             continue;
         }
 
@@ -110,7 +100,7 @@ fn parse_session(path: &Path, project: &str, active_re: &Regex, calls: &mut Vec<
             calls.push(SkillCall {
                 skill: skill.to_string(),
                 timestamp_ms: ts,
-                project: project.to_string(),
+                project: project.clone(),
                 session_id: session_id.clone(),
                 source: SOURCE.into(),
             });

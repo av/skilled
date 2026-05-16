@@ -35,7 +35,7 @@ export class DroidProvider implements Provider {
     }
   }
 
-  private parseSession(path: string, parentDir: string, calls: SkillCall[]) {
+  private parseSession(path: string, _parentDir: string, calls: SkillCall[]) {
     let content: string;
     try {
       content = readFileSync(path, "utf-8");
@@ -43,12 +43,9 @@ export class DroidProvider implements Provider {
       return;
     }
 
-    // Derive project from directory structure: sessions/{project-slug}/session.jsonl
-    const relDir = parentDir.replace(SESSIONS_DIR, "").replace(/^\//, "");
-    const project = relDir ? "/" + relDir.replace(/-/g, "/") : "";
-
     const lines = content.split("\n");
     let sessionId = "";
+    let project = "";
 
     for (const line of lines) {
       if (!line.trim()) continue;
@@ -61,6 +58,8 @@ export class DroidProvider implements Provider {
 
       if (entry.type === "session_start") {
         sessionId = entry.id ?? "";
+        // Extract project path from session metadata
+        if (entry.cwd) project = entry.cwd;
       }
 
       if (entry.type !== "message") continue;

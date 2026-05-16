@@ -87,18 +87,14 @@ export class ClaudeCodeProvider implements Provider {
         continue;
       }
 
-      // Decode project path from dir name: -home-user-code-foo -> /home/user/code/foo
-      const project = "/" + projDir.replace(/^-/, "").replace(/-/g, "/");
-
       for (const file of files) {
-        this.parseSessionFile(join(projPath, file), project, calls, seen);
+        this.parseSessionFile(join(projPath, file), calls, seen);
       }
     }
   }
 
   private parseSessionFile(
     path: string,
-    project: string,
     calls: SkillCall[],
     seen: Set<string>,
   ) {
@@ -111,7 +107,23 @@ export class ClaudeCodeProvider implements Provider {
 
     const sessionId = path.replace(/.*\//, "").replace(".jsonl", "");
 
+    // Extract project path (cwd) from session entries rather than
+    // decoding the directory name, which is ambiguous when paths contain hyphens.
+    let project = "";
+
     for (const line of content.split("\n")) {
+      if (!line.trim()) continue;
+
+      // Fast path: extract cwd from any early entry that has it
+      if (!project && line.includes('"cwd"')) {
+        try {
+          const entry = JSON.parse(line);
+          if (entry.cwd) project = entry.cwd;
+        } catch {
+          // ignore parse errors
+        }
+      }
+
       if (!line.includes('"Skill"')) continue;
 
       let entry: any;
@@ -120,6 +132,8 @@ export class ClaudeCodeProvider implements Provider {
       } catch {
         continue;
       }
+
+      if (!project && entry.cwd) project = entry.cwd;
 
       if (entry.type !== "assistant") continue;
       const msg = entry.message;
@@ -139,7 +153,7 @@ export class ClaudeCodeProvider implements Provider {
         calls.push({
           skill,
           timestamp: new Date(ts),
-          project,
+          project: project || entry.cwd || "",
           sessionId,
           source: this.name,
         });
