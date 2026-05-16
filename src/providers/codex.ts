@@ -31,7 +31,7 @@ export class CodexProvider implements Provider {
   }
 
   private walkSessions(dir: string, calls: SkillCall[]) {
-    let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>;
+    let entries: import("fs").Dirent[];
     try {
       entries = readdirSync(dir, { withFileTypes: true });
     } catch {

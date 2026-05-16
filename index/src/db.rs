@@ -114,8 +114,10 @@ pub fn write_index(db_path: &Path, results: &[ProviderResult]) -> Result<IndexSt
 
     fs::rename(&tmp_path, db_path).map_err(|e| format!("rename: {e}"))?;
     // Clean up WAL/SHM files from the temp DB
-    let _ = fs::remove_file(tmp_path.with_extension("db.tmp-wal"));
-    let _ = fs::remove_file(tmp_path.with_extension("db.tmp-shm"));
+    // Note: SQLite names these as "<dbpath>-wal" and "<dbpath>-shm"
+    let tmp_str = tmp_path.display().to_string();
+    let _ = fs::remove_file(format!("{tmp_str}-wal"));
+    let _ = fs::remove_file(format!("{tmp_str}-shm"));
 
     Ok(IndexStats {
         total_calls,
