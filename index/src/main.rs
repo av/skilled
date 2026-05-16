@@ -21,7 +21,7 @@ fn main() {
                 return;
             }
             "-v" | "--version" => {
-                println!("0.1.0");
+                println!("0.3.0");
                 return;
             }
             "-q" | "--quiet" => quiet = true,

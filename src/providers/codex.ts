@@ -31,14 +31,14 @@ export class CodexProvider implements Provider {
   }
 
   private walkSessions(dir: string, calls: SkillCall[]) {
-    let entries: string[];
+    let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>;
     try {
-      entries = readdirSync(dir, { withFileTypes: true }) as any;
+      entries = readdirSync(dir, { withFileTypes: true });
     } catch {
       return;
     }
 
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         this.walkSessions(fullPath, calls);

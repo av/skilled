@@ -125,7 +125,8 @@ export function parseCli(argv: string[]): CliResult {
 function matchSource(providerName: string, filter: string): boolean {
   const slug = providerName.toLowerCase().replace(/\s+/g, "-");
   const f = filter.toLowerCase();
-  return providerName.toLowerCase() === f || slug === f;
+  return providerName.toLowerCase() === f || slug === f
+    || slug.startsWith(f) || providerName.toLowerCase().startsWith(f);
 }
 
 function collectCalls(providers: Provider[], source?: string, project?: string): SkillCall[] {
@@ -303,6 +304,11 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
       stale: serialize(audit.stale),
       oneOff: serialize(audit.oneOff),
     }, null, 2));
+    return;
+  }
+
+  if (calls.length === 0) {
+    console.log("No calls found.");
     return;
   }
 
