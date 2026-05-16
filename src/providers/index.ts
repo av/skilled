@@ -11,6 +11,7 @@ const STALE_MS = 60_000;
 
 function findIndexer(): string | null {
   const candidates = [
+    join(dirname(process.execPath), "skilled-index"),
     join(dirname(process.argv[0] ?? ""), "skilled-index"),
     join(import.meta.dir, "..", "..", "index", "target", "release", "skilled-index"),
   ];
@@ -19,7 +20,7 @@ function findIndexer(): string | null {
     if (existsSync(c)) return c;
   }
 
-  const which = spawnSync("which", ["skilled-index"], { stdio: "pipe" });
+  const which = spawnSync("command", ["-v", "skilled-index"], { stdio: "pipe", shell: true });
   if (which.status === 0) return which.stdout.toString().trim();
 
   return null;

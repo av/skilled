@@ -91,7 +91,15 @@ def download_binary(dest_dir):
         st = os.stat(binary_path)
         os.chmod(binary_path, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
+    index_name = f"{BINARY}-index.exe" if plat == "windows" else f"{BINARY}-index"
+    index_path = os.path.join(dest_dir, index_name)
+    if os.path.isfile(index_path) and plat != "windows":
+        st = os.stat(index_path)
+        os.chmod(index_path, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
     print(f"Successfully installed {BINARY} binary to {binary_path}")
+    if os.path.isfile(index_path):
+        print(f"Successfully installed {BINARY}-index to {index_path}")
 
 
 class BuildPyWithBinary(build_py):

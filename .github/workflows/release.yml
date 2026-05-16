@@ -19,15 +19,19 @@ jobs:
           - platform: linux-amd64
             os: ubuntu-latest
             artifact: skilled-linux-amd64
+            rust-target: x86_64-unknown-linux-gnu
           - platform: linux-arm64
             os: ubuntu-24.04-arm
             artifact: skilled-linux-arm64
+            rust-target: aarch64-unknown-linux-gnu
           - platform: darwin-arm64
             os: macos-latest
             artifact: skilled-darwin-arm64
+            rust-target: aarch64-apple-darwin
           - platform: windows-amd64
             os: windows-latest
             artifact: skilled-windows-amd64
+            rust-target: x86_64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v4
@@ -38,16 +42,39 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            index/target
+          key: ${{ runner.os }}-${{ matrix.rust-target }}-cargo-${{ hashFiles('index/Cargo.lock') }}
+
+      - name: Build indexer
+        run: cargo build --release --manifest-path index/Cargo.toml
+
+      - name: Copy indexer (Unix)
+        if: runner.os != 'Windows'
+        run: cp index/target/release/skilled-index .
+
+      - name: Copy indexer (Windows)
+        if: runner.os == 'Windows'
+        run: copy index\target\release\skilled-index.exe .
+
       - name: Build
         run: bun build --compile src/main.ts --outfile skilled
 
       - name: Package (Unix)
         if: runner.os != 'Windows'
-        run: tar czf ${{ matrix.artifact }}.tar.gz skilled
+        run: tar czf ${{ matrix.artifact }}.tar.gz skilled skilled-index
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
-        run: 7z a ${{ matrix.artifact }}.zip skilled.exe
+        run: 7z a ${{ matrix.artifact }}.zip skilled.exe skilled-index.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -62,6 +62,8 @@ facts check --tags "ci"
 ```
 `check` is your primary feedback loop. It lints the files first (aborting on structural errors), then runs every command-fact and reports pass/fail/manual. Run it often. Exit 0 means all command-facts pass; manual facts don't affect the exit code.
 
+**Manual facts (`?` in output) are your responsibility.** They have no command — you verify them by reading the relevant code. For each `?` fact: read what it claims, check the code, then report PASS or FAIL with a one-line reason. Reporting "N manual" without checking each one is not acceptable — those facts exist because they describe behavior that matters.
+
 **Add facts:**
 ```
 facts add "users can sign up" --section features/auth
@@ -111,12 +113,36 @@ The lifecycle flows `@draft → @spec → @implemented`. Each companion skill ow
 
 ## Writing good facts
 
+Facts should describe what the project **does** — its behaviors, features, and contracts — not what files it has or what libraries it uses. The test: if an agent reimplemented this project using only the fact sheet, would the result behave correctly?
+
+- **Behavioral** — describe what happens from the user's perspective ("expired tokens are rejected with 401") not what exists in the code ("there is an auth module")
 - **Atomic** — one truth per fact, independently verifiable
 - **Declarative** — state what is true, not what to do ("uses PostgreSQL" not "set up PostgreSQL")
 - **Stable** — shouldn't change with every commit ("tests pass" not "there are 47 tests")
-- **Verifiable** — add a command when a simple check exists; manual facts are fine for things that need judgment
+- **Falsifiable** — you could imagine a broken implementation where this fact would not hold
+
+Structural facts (dependencies, file layout) are supporting detail, not the main content. A fact sheet full of "uses X library" and "has Y directory" tells an agent nothing about how the project actually works.
 
 Good validation commands are fast, idempotent, and test one thing. Prefer `test -f`, `grep -q`, and short script checks over running full builds.
+
+## Domain vocabulary
+
+The `## domain` section in the main `.facts` file defines the project's key entities and their relationships. These are facts too — atomic truth statements — but they describe the conceptual model rather than specific behaviors.
+
+Entity facts name and define a concept — the common pattern is `a <Name> is <definition>`.
+Relation facts state how entities connect. Use the defined entity names in natural declarative statements — there is no rigid grammar, but the connection should be specific.
+
+```
+## domain
+- a FactSheet is a parsed *.facts file containing sections and facts
+- a Section is a heading-delimited group of facts, nestable via heading depth
+- a Fact is an atomic truth statement: a label, optional command, optional tags
+- a FactSheet contains a preamble and nested Sections
+- check validates command-bearing Facts by running them in the project root
+- Tags filter Facts via boolean expressions
+```
+
+Use these names consistently across the fact sheet. The domain section lives in the main `.facts` file. It is built by `facts-discover`, refined by `facts-refine`, and extended by `facts-implement` when new concepts emerge during implementation.
 
 ## Agent workflows
 

@@ -107,23 +107,25 @@ export function skillDetail(calls: SkillCall[], skillName: string): SkillDetail 
   return { skill: skillName, count: filtered.length, sessions: sessions.size, firstUsed, lastUsed, projects, weeklyUsage };
 }
 
+export interface TrendEntry { skill: SkillCount; recentCount: number; priorCount: number; pct: number }
+export interface MostUsedEntry { skill: SkillCount; share: number }
+
 export interface SkillAudit {
   stale: SkillCount[];
   oneOff: SkillCount[];
-  declining: { skill: SkillCount; recentCount: number; priorCount: number }[];
-  rising: { skill: SkillCount; recentCount: number; priorCount: number }[];
-  heavyHitters: { skill: SkillCount; share: number }[];
+  declining: TrendEntry[];
+  rising: TrendEntry[];
+  mostUsed: MostUsedEntry[];
   crossProject: SkillCount[];
   singleProject: SkillCount[];
 }
 
 export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudit {
   const now = Date.now();
-  const thirtyDaysAgo = now - 30 * 86400000;
   const fourWeeksAgo = now - 28 * 86400000;
   const eightWeeksAgo = now - 56 * 86400000;
 
-  const stale = skills.filter(s => s.lastUsed.getTime() < thirtyDaysAgo);
+  const stale = skills.filter(s => s.lastUsed.getTime() < fourWeeksAgo);
   const oneOff = skills.filter(s => s.count === 1);
 
   const recentCounts = new Map<string, number>();
@@ -137,35 +139,40 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
     }
   }
 
-  const declining = skills
+  const declining: TrendEntry[] = skills
     .filter(s => {
       const recent = recentCounts.get(s.skill) ?? 0;
       const prior = priorCounts.get(s.skill) ?? 0;
       return prior > 0 && recent < prior * 0.5;
     })
-    .map(s => ({
-      skill: s,
-      recentCount: recentCounts.get(s.skill) ?? 0,
-      priorCount: priorCounts.get(s.skill) ?? 0,
-    }));
+    .map(s => {
+      const recentCount = recentCounts.get(s.skill) ?? 0;
+      const priorCount = priorCounts.get(s.skill) ?? 0;
+      const pct = Math.round((1 - recentCount / priorCount) * 100);
+      return { skill: s, recentCount, priorCount, pct };
+    });
 
-  const rising = skills
+  const rising: TrendEntry[] = skills
     .filter(s => {
       const recent = recentCounts.get(s.skill) ?? 0;
       const prior = priorCounts.get(s.skill) ?? 0;
       return prior > 0 && recent >= prior * 1.5;
     })
-    .map(s => ({
-      skill: s,
-      recentCount: recentCounts.get(s.skill) ?? 0,
-      priorCount: priorCounts.get(s.skill) ?? 0,
-    }));
+    .map(s => {
+      const recentCount = recentCounts.get(s.skill) ?? 0;
+      const priorCount = priorCounts.get(s.skill) ?? 0;
+      const pct = Math.round((recentCount / priorCount - 1) * 100);
+      return { skill: s, recentCount, priorCount, pct };
+    });
 
-  const totalCalls = skills.reduce((sum, s) => sum + s.count, 0);
-  const heavyHitters = [...skills]
-    .sort((a, b) => b.count - a.count)
+  const decliningSet = new Set(declining.map(d => d.skill.skill));
+  const recentTotal = [...recentCounts.values()].reduce((sum, n) => sum + n, 0);
+  const mostUsed = [...skills]
+    .filter(s => !decliningSet.has(s.skill))
+    .sort((a, b) => (recentCounts.get(b.skill) ?? 0) - (recentCounts.get(a.skill) ?? 0))
     .slice(0, 10)
-    .map(s => ({ skill: s, share: totalCalls > 0 ? s.count / totalCalls : 0 }));
+    .filter(s => (recentCounts.get(s.skill) ?? 0) > 0)
+    .map(s => ({ skill: s, share: recentTotal > 0 ? (recentCounts.get(s.skill) ?? 0) / recentTotal : 0 }));
 
   const crossProject = skills
     .filter(s => s.projects >= 3)
@@ -175,5 +182,5 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
     .filter(s => s.projects === 1)
     .sort((a, b) => b.count - a.count);
 
-  return { stale, oneOff, declining, rising, heavyHitters, crossProject, singleProject };
+  return { stale, oneOff, declining, rising, mostUsed, crossProject, singleProject };
 }

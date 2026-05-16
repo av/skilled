@@ -295,7 +295,7 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
       return item;
     });
     console.log(JSON.stringify({
-      heavyHitters: serialize(audit.heavyHitters),
+      mostUsed: serialize(audit.mostUsed),
       rising: serialize(audit.rising),
       declining: serialize(audit.declining),
       crossProject: serialize(audit.crossProject),
@@ -316,32 +316,34 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
     }
   };
 
-  section("Heavy Hitters", audit.heavyHitters.map(h => ({
+  const limit = cli.limit ?? 10;
+
+  section("Most Used (last 4w)", audit.mostUsed.map(h => ({
     skill: h.skill.skill,
-    detail: `${h.skill.count} calls (${(h.share * 100).toFixed(1)}%)`,
+    detail: `${Math.round(h.share * 100)}%   ${h.skill.count} calls   ${h.skill.projects} proj`,
   })));
 
-  section("Rising", audit.rising.map(r => ({
+  section("Rising (↑50%+ last 4w)", audit.rising.map(r => ({
     skill: r.skill.skill,
-    detail: `${r.priorCount} → ${r.recentCount} (last 4w)`,
+    detail: `${r.priorCount} → ${r.recentCount}   ↑${r.pct}%`,
   })));
 
-  section("Declining", audit.declining.map(d => ({
+  section("Declining (↓50%+ last 4w)", audit.declining.map(d => ({
     skill: d.skill.skill,
-    detail: `${d.priorCount} → ${d.recentCount} (last 4w)`,
+    detail: `${d.priorCount} → ${d.recentCount}   ↓${d.pct}%`,
   })));
 
-  section("Cross-Project (3+)", audit.crossProject.map(s => ({
+  section("Cross-Project (3+)", audit.crossProject.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `${s.projects} projects, ${s.count} calls`,
   })));
 
-  section("Single-Project", audit.singleProject.slice(0, cli.limit ?? 10).map(s => ({
+  section("Single-Project", audit.singleProject.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `${s.count} calls`,
   })));
 
-  section("Stale (30+ days)", audit.stale.map(s => ({
+  section("Stale (28+ days)", audit.stale.map(s => ({
     skill: s.skill,
     detail: `last used ${timeAgo(s.lastUsed)} ago`,
   })));

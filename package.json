@@ -1,13 +1,15 @@
 {
   "name": "skilled",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TUI dashboard for skill usage stats across AI coding tools",
   "module": "src/main.ts",
   "type": "module",
   "private": true,
   "scripts": {
     "start": "bun run src/main.ts",
-    "build": "bun build --compile src/main.ts --outfile skilled"
+    "build": "sh scripts/build.sh",
+    "build:ts": "bun build --compile src/main.ts --outfile skilled",
+    "build:index": "cargo build --release --manifest-path index/Cargo.toml && cp index/target/release/skilled-index ."
   },
   "bin": {
     "skilled": "src/main.ts"

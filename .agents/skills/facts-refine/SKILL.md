@@ -33,6 +33,11 @@ Read the full fact sheet for context, then focus on `@draft` facts — these are
 
 For each `@draft` fact, and across the fact sheet generally, scan for these categories of issues:
 
+**Structural instead of behavioral:**
+- Facts that describe what exists ("has an auth module") instead of what happens ("rejects expired tokens with 401")
+- Facts about file layout, dependency names, or project structure that don't constrain behavior
+- The test: if an agent rewrote this project using only the fact sheet, would this fact help them get the behavior right? If not, cut it or replace it with the behavior it implies
+
 **Vague or underdefined facts:**
 - Labels that could mean multiple things ("handles errors properly", "good performance")
 - Facts that aren't testable even in principle ("the system is reliable")
@@ -52,13 +57,19 @@ For each `@draft` fact, and across the fact sheet generally, scan for these cate
 - Facts that pack multiple independent claims into one label
 - Facts that would need multiple unrelated changes to implement
 
+**Domain vocabulary:**
+- Are entity names consistent across the fact sheet? Does the same concept go by different names in different sections?
+- Are there domain facts that are too vague? ("handles data" → what specific entities?)
+- Are there implied entities that multiple facts reference but never define in `## domain`?
+- Do relation facts match the actual code relationships?
+
 **Missing validation:**
 - Facts that could have a meaningful check command but don't
 - Facts with commands that don't actually validate the claim (keyword grep)
 
 ### 3. Discuss with the user
 
-Present your findings organized by severity — contradictions first, then gaps, then vagueness, then compound facts. For each issue:
+Present your findings organized by severity — contradictions first, then gaps, then vagueness, then compound facts, then vocabulary inconsistencies. For each issue:
 
 1. Quote the fact(s) involved
 2. Explain the problem concisely
@@ -79,6 +90,8 @@ facts remove <id>
 
 When splitting a `@draft` fact into multiple precise facts, remove the original draft and add the new pieces as `@spec`. Confirm each change landed correctly before moving on.
 
+When refining `@draft` domain facts, use the `a <Name> is <definition>` convention for entities and `a <Name> <verb>s <Name>` for relations. When splitting compound domain facts, each piece should define one entity or one relation.
+
 ### 5. Verify and summarize
 
 After all changes are applied:
@@ -97,6 +110,7 @@ Summarize what changed: facts reworded, split, added, removed, commands added or
 - When splitting a compound fact, preserve the original intent across the pieces.
 - Don't add validation commands unless they genuinely test the claim. A manual fact is better than a false check.
 - Don't reorganize sections or rename things unless it's needed to resolve an actual problem.
+- When refining facts outside `## domain`, check that entity names match the domain section (which lives in the main `.facts` file). Propose renaming facts that use inconsistent terminology.
 - Keep the conversation focused. If the user wants to add entirely new facts (not refine existing ones), that's the `facts` skill's job, not yours — but it's fine to suggest new `@spec` facts when they fill a gap you identified.
 
 ## Example session

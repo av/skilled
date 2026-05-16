@@ -99,11 +99,12 @@ main() {
   echo "Extracting..."
   tar xzf "${tmpdir}/${artifact}.tar.gz" -C "$tmpdir"
 
-  echo "Installing to ${install_dir}/${BINARY}..."
+  echo "Installing to ${install_dir}..."
   install -m 755 "${tmpdir}/${BINARY}" "${install_dir}/${BINARY}"
+  install -m 755 "${tmpdir}/${BINARY}-index" "${install_dir}/${BINARY}-index"
 
   echo ""
-  echo "Successfully installed ${BINARY} to ${install_dir}/${BINARY}"
+  echo "Successfully installed ${BINARY} and ${BINARY}-index to ${install_dir}/"
 
   case ":$PATH:" in
     *":${install_dir}:"*) ;;

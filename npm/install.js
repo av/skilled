@@ -104,11 +104,20 @@ async function main() {
   const binaryName = platform === "windows" ? `${BINARY}.exe` : BINARY;
   const binaryPath = path.join(binDir, binaryName);
 
+  const indexName = platform === "windows" ? `${BINARY}-index.exe` : `${BINARY}-index`;
+  const indexPath = path.join(binDir, indexName);
+
   if (platform !== "windows") {
     fs.chmodSync(binaryPath, 0o755);
+    if (fs.existsSync(indexPath)) {
+      fs.chmodSync(indexPath, 0o755);
+    }
   }
 
   console.log(`Successfully installed ${BINARY} to ${binaryPath}`);
+  if (fs.existsSync(indexPath)) {
+    console.log(`Successfully installed ${BINARY}-index to ${indexPath}`);
+  }
 }
 
 main();

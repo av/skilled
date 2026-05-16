@@ -262,25 +262,23 @@ export async function run(providers: Provider[]) {
       lines.push({ text: "", fg: colors.bg });
     }
 
-    section("★", "HEAVY HITTERS — top usage", audit.heavyHitters.length, purple,
-      audit.heavyHitters.map(h => {
+    section("★", "MOST USED — last 4 weeks", audit.mostUsed.length, purple,
+      audit.mostUsed.map(h => {
         const pct = `${Math.round(h.share * 100)}%`.padStart(4);
         return `${h.skill.skill.padEnd(22)} ${pct}   ${String(h.skill.count).padStart(4)} calls   ${h.skill.projects} proj`;
       }));
 
     section("▲", "RISING — 50%+ growth last 4w", audit.rising.length, success,
       audit.rising.map(r => {
-        const pct = r.priorCount > 0 ? Math.round((r.recentCount / r.priorCount - 1) * 100) : 999;
-        return `${r.skill.skill.padEnd(22)} now: ${String(r.recentCount).padStart(3)}  was: ${String(r.priorCount).padStart(3)}   ↑${pct}%`;
+        return `${r.skill.skill.padEnd(22)} now: ${String(r.recentCount).padStart(3)}  was: ${String(r.priorCount).padStart(3)}   ↑${r.pct}%`;
       }));
 
     section("▼", "DECLINING — 50%+ drop last 4w", audit.declining.length, danger,
       audit.declining.map(d => {
-        const pct = d.priorCount > 0 ? Math.round((1 - d.recentCount / d.priorCount) * 100) : 0;
-        return `${d.skill.skill.padEnd(22)} now: ${String(d.recentCount).padStart(3)}  was: ${String(d.priorCount).padStart(3)}   ↓${pct}%`;
+        return `${d.skill.skill.padEnd(22)} now: ${String(d.recentCount).padStart(3)}  was: ${String(d.priorCount).padStart(3)}   ↓${d.pct}%`;
       }));
 
-    section("⚠", "STALE — unused 30+ days", audit.stale.length, warn,
+    section("⚠", "STALE — unused 28+ days", audit.stale.length, warn,
       audit.stale.map(s => `${s.skill.padEnd(22)} last: ${timeAgo(s.lastUsed)}   ${String(s.count).padStart(4)} calls`));
 
     section("◈", "CROSS-PROJECT — used in 3+ projects", audit.crossProject.length, info,
@@ -290,7 +288,7 @@ export async function run(providers: Provider[]) {
       audit.oneOff.map(s => `${s.skill.padEnd(22)} ${timeAgo(s.lastUsed)} ago`));
 
     section("▪", "SINGLE-PROJECT — 1 project only", audit.singleProject.length, pink,
-      audit.singleProject.map(s => `${s.skill.padEnd(22)} ${String(s.count).padStart(4)} calls`));
+      audit.singleProject.slice(0, 10).map(s => `${s.skill.padEnd(22)} ${String(s.count).padStart(4)} calls`));
 
     state.auditLines = lines;
   }

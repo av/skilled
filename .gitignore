@@ -1,4 +1,5 @@
 node_modules/
 bun.lock
 skilled
+skilled-index
 dist/
