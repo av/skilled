@@ -22,9 +22,6 @@ jobs:
           - platform: linux-arm64
             os: ubuntu-24.04-arm
             artifact: skilled-linux-arm64
-          - platform: darwin-amd64
-            os: macos-13
-            artifact: skilled-darwin-amd64
           - platform: darwin-arm64
             os: macos-latest
             artifact: skilled-darwin-arm64
