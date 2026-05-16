@@ -13,7 +13,7 @@ const BUILTINS = new Set([
   "imagegen", "openai-docs", "plugin-creator", "skill-creator", "skill-installer",
 ]);
 
-const SKILL_NAME_RE = /<name>([^<]+)<\/name>/;
+const SKILL_NAME_RE = /<name>([^<]+)<\/name>/g;
 
 export class CodexProvider implements Provider {
   readonly name = "Codex CLI";
@@ -87,23 +87,22 @@ export class CodexProvider implements Provider {
           const text: string = part.text ?? "";
           if (!text.includes("<skill>")) continue;
 
-          const match = text.match(SKILL_NAME_RE);
-          if (!match) continue;
+          for (const match of text.matchAll(SKILL_NAME_RE)) {
+            const skill = match[1]!;
+            if (BUILTINS.has(skill)) continue;
 
-          const skill = match[1]!;
-          if (BUILTINS.has(skill)) continue;
+            const ts = entry.timestamp
+              ? new Date(entry.timestamp)
+              : new Date(0);
 
-          const ts = entry.timestamp
-            ? new Date(entry.timestamp)
-            : new Date(0);
-
-          calls.push({
-            skill,
-            timestamp: ts,
-            project,
-            sessionId,
-            source: this.name,
-          });
+            calls.push({
+              skill,
+              timestamp: ts,
+              project,
+              sessionId,
+              source: this.name,
+            });
+          }
         }
       }
     }

@@ -93,24 +93,22 @@ fn parse_session(
                         continue;
                     }
 
-                    let caps = match name_re.captures(text) {
-                        Some(c) => c,
-                        None => continue,
-                    };
-                    let skill = &caps[1];
-                    if builtins.contains(skill) {
-                        continue;
+                    for caps in name_re.captures_iter(text) {
+                        let skill = &caps[1];
+                        if builtins.contains(skill) {
+                            continue;
+                        }
+
+                        let ts = parse_timestamp(&entry["timestamp"]);
+
+                        calls.push(SkillCall {
+                            skill: skill.to_string(),
+                            timestamp_ms: ts,
+                            project: project.clone(),
+                            session_id: session_id.clone(),
+                            source: SOURCE.into(),
+                        });
                     }
-
-                    let ts = parse_timestamp(&entry["timestamp"]);
-
-                    calls.push(SkillCall {
-                        skill: skill.to_string(),
-                        timestamp_ms: ts,
-                        project: project.clone(),
-                        session_id: session_id.clone(),
-                        source: SOURCE.into(),
-                    });
                 }
             }
             _ => {}

@@ -176,7 +176,7 @@ function sortSkills(skills: SkillCount[], mode: SortMode, asc: boolean): SkillCo
 
 function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: number } {
   const now = new Date();
-  const todayDow = (now.getDay() + 6) % 7;
+  const todayDow = (now.getUTCDay() + 6) % 7;
   const startMs = now.getTime() - ((HEATMAP_WEEKS - 1) * 7 + todayDow) * 86400000;
 
   const dayCounts = new Map<string, number>();
