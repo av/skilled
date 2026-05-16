@@ -4,6 +4,7 @@ Setup script that downloads the correct prebuilt binary during install.
 
 import os
 import platform
+import shutil
 import stat
 import sys
 import tarfile
@@ -86,12 +87,32 @@ def download_binary(dest_dir):
 
     os.makedirs(dest_dir, exist_ok=True)
 
-    if ext == "zip":
-        with zipfile.ZipFile(BytesIO(data)) as zf:
-            zf.extractall(dest_dir)
-    else:
-        with tarfile.open(fileobj=BytesIO(data), mode="r:gz") as tf:
-            tf.extractall(dest_dir)
+    # Extract into a temp directory first to avoid leaving corrupted binaries
+    # on partial failure (corrupt archive, disk full, etc.).
+    tmp_dir = dest_dir + ".tmp"
+    if os.path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir)
+    os.makedirs(tmp_dir)
+
+    try:
+        if ext == "zip":
+            with zipfile.ZipFile(BytesIO(data)) as zf:
+                zf.extractall(tmp_dir)
+        else:
+            with tarfile.open(fileobj=BytesIO(data), mode="r:gz") as tf:
+                tf.extractall(tmp_dir)
+
+        # Move extracted files to final destination only after successful extraction
+        for name in os.listdir(tmp_dir):
+            src = os.path.join(tmp_dir, name)
+            dst = os.path.join(dest_dir, name)
+            if os.path.exists(dst):
+                os.remove(dst)
+            os.rename(src, dst)
+    finally:
+        # Clean up temp directory regardless of success/failure
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
 
     binary_name = f"{BINARY}.exe" if plat == "windows" else BINARY
     binary_path = os.path.join(dest_dir, binary_name)

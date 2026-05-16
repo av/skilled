@@ -10,6 +10,14 @@ const { pipeline } = require("stream");
 
 const pipelineAsync = promisify(pipeline);
 
+function rmrf(dir) {
+  if (fs.rmSync) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } else if (fs.existsSync(dir)) {
+    fs.rmdirSync(dir, { recursive: true });
+  }
+}
+
 const REPO = "av/skilled";
 const BINARY = "skilled";
 const VERSION = require("./package.json").version;
@@ -74,18 +82,35 @@ function followRedirects(url) {
 async function downloadAndExtract(url, destDir, platform) {
   const res = await followRedirects(url);
 
-  if (platform === "windows") {
-    const zipPath = path.join(destDir, "download.zip");
-    const fileStream = fs.createWriteStream(zipPath);
-    await pipelineAsync(res, fileStream);
-    execSync(`tar -xf "${zipPath}" -C "${destDir}"`);
-    fs.unlinkSync(zipPath);
-  } else {
-    const tarPath = path.join(destDir, "download.tar.gz");
-    const fileStream = fs.createWriteStream(tarPath);
-    await pipelineAsync(res, fileStream);
-    execSync(`tar xzf "${tarPath}" -C "${destDir}"`);
-    fs.unlinkSync(tarPath);
+  // Extract into a temp directory first to avoid leaving corrupted binaries
+  // on partial failure (network drop, disk full, corrupt archive).
+  const tmpDir = destDir + ".tmp";
+  rmrf(tmpDir);
+  fs.mkdirSync(tmpDir, { recursive: true });
+
+  try {
+    if (platform === "windows") {
+      const zipPath = path.join(tmpDir, "download.zip");
+      const fileStream = fs.createWriteStream(zipPath);
+      await pipelineAsync(res, fileStream);
+      execSync(`tar -xf "${zipPath}" -C "${tmpDir}"`);
+      fs.unlinkSync(zipPath);
+    } else {
+      const tarPath = path.join(tmpDir, "download.tar.gz");
+      const fileStream = fs.createWriteStream(tarPath);
+      await pipelineAsync(res, fileStream);
+      execSync(`tar xzf "${tarPath}" -C "${tmpDir}"`);
+      fs.unlinkSync(tarPath);
+    }
+
+    // Move extracted files to final destination only after successful extraction
+    const files = fs.readdirSync(tmpDir);
+    for (const file of files) {
+      fs.renameSync(path.join(tmpDir, file), path.join(destDir, file));
+    }
+  } finally {
+    // Clean up temp directory regardless of success/failure
+    rmrf(tmpDir);
   }
 }
 
