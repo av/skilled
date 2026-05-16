@@ -286,7 +286,8 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
   const audit = auditSkills(calls, skills);
 
   if (cli.json) {
-    const serialize = (items: any[]) => items.map((item: any) => {
+    const limit = cli.limit ?? Infinity;
+    const serialize = (items: any[]) => items.slice(0, limit).map((item: any) => {
       if (item.skill && typeof item.skill === "object") {
         return { ...item, skill: { ...item.skill, lastUsed: item.skill.lastUsed.toISOString() } };
       }

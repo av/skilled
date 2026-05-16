@@ -29,9 +29,16 @@ fn main() {
             "--db" => {
                 i += 1;
                 db_path = args.get(i).cloned();
-                if db_path.is_none() {
-                    eprintln!("Error: --db requires a path");
-                    std::process::exit(1);
+                match &db_path {
+                    None => {
+                        eprintln!("Error: --db requires a path");
+                        std::process::exit(1);
+                    }
+                    Some(p) if p.starts_with('-') => {
+                        eprintln!("Error: --db requires a path, got '{p}'");
+                        std::process::exit(1);
+                    }
+                    _ => {}
                 }
             }
             other => {
