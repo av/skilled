@@ -171,6 +171,12 @@ pub fn collect(home: &str) -> ProviderResult {
                             _ => continue,
                         };
 
+                        // Skip background_context messages — these replay the parent session's
+                        // history into subagent sessions and do not represent real skill invocations.
+                        if text.contains("<background_context>") {
+                            continue;
+                        }
+
                         for caps in cmd_re.captures_iter(&text) {
                             let skill = &caps[1];
                             if builtins.contains(skill) || seen.contains(skill) {

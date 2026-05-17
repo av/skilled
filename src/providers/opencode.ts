@@ -69,6 +69,8 @@ export class OpenCodeProvider implements Provider {
           source: this.name,
         });
       }
+    } catch {
+      // Database may be corrupt, locked, or have a schema mismatch — return whatever we collected so far.
     } finally {
       db.close();
     }

@@ -137,6 +137,10 @@ export class GrokProvider implements Provider {
                 ? record.content.map((p: any) => p?.text ?? "").join("")
                 : "";
 
+            // Skip background_context messages — these replay the parent session's
+            // history into subagent sessions and do not represent real skill invocations.
+            if (text.includes("<background_context>")) continue;
+
             for (const m of text.matchAll(COMMAND_NAME_RE)) {
               const skill = m[1]!;
               if (BUILTINS.has(skill) || seen.has(skill)) continue;
