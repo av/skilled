@@ -62,10 +62,6 @@ export function ensureIndex(db?: string): boolean {
   return refreshIndex(true, false, db) === "ok";
 }
 
-export function indexAvailable(): boolean {
-  return findIndexer() !== null;
-}
-
 export function createIndexProviders(customDb?: string): Provider[] | null {
   const dbPath = customDb ?? INDEX_DB;
   if (!existsSync(dbPath)) return null;

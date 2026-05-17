@@ -1,7 +1,7 @@
 import { parseArgs } from "util";
 import type { Provider } from "./providers/base.js";
 import type { SkillCall } from "./models.js";
-import { skillCounts, dailyCounts, hourlyCounts, skillDetail, auditSkills, projectShort, timeAgo } from "./data.js";
+import { skillCounts, skillDetail, auditSkills, projectShort, timeAgo } from "./data.js";
 
 const VERSION = "0.3.0";
 
@@ -197,20 +197,30 @@ export function runCli(providers: Provider[], cli: CliResult): void {
 }
 
 function cmdProviders(providers: Provider[], cli: CliResult) {
-  const rows = providers.map(p => ({
+  let rows = providers.map(p => ({
     name: p.name,
     available: p.available(),
+    calls: p.available() ? p.collect().length : 0,
   }));
+
+  if (cli.source) {
+    rows = rows.filter(r => matchSource(r.name, cli.source!));
+  }
 
   if (cli.json) {
     console.log(JSON.stringify(rows, null, 2));
     return;
   }
 
-  console.log(`${pad("SOURCE", 20)} STATUS`);
-  console.log(`${"─".repeat(20)} ${"─".repeat(10)}`);
+  if (rows.length === 0) {
+    console.log("No providers match the given filter.");
+    return;
+  }
+
+  console.log(`${pad("SOURCE", 20)} ${padLeft("CALLS", 6)} STATUS`);
+  console.log(`${"─".repeat(20)} ${"─".repeat(6)} ${"─".repeat(10)}`);
   for (const r of rows) {
-    console.log(`${pad(r.name, 20)} ${r.available ? "available" : "not found"}`);
+    console.log(`${pad(r.name, 20)} ${padLeft(String(r.calls), 6)} ${r.available ? "available" : "not found"}`);
   }
 }
 

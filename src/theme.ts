@@ -25,12 +25,3 @@ export const barColors = barPalette.map((h) => RGBA.fromHex(h));
 export const heatmapPalette = ["#161B22", "#103328", "#20614D", "#3D9478", "#50AE90"];
 export const heatmapColors = heatmapPalette.map((h) => RGBA.fromHex(h));
 
-export const rainbowHex = [
-  "#50AE90", "#C49058", "#8EBE6E", "#D48E6E",
-  "#5EB8B0", "#C4A850", "#78AE78",
-];
-
-export const sparkColors = {
-  bar: RGBA.fromHex("#50AE90"),
-  barDim: RGBA.fromHex("#1A3D34"),
-};
