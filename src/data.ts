@@ -125,9 +125,10 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
   const fourWeeksAgo = now - 28 * 86400000;
   const eightWeeksAgo = now - 56 * 86400000;
 
-  const stale = skills.filter(s => s.lastUsed.getTime() < fourWeeksAgo);
-  const staleSet = new Set(stale.map(s => s.skill));
   const oneOff = skills.filter(s => s.count === 1);
+  const oneOffSet = new Set(oneOff.map(s => s.skill));
+  const stale = skills.filter(s => s.lastUsed.getTime() < fourWeeksAgo && !oneOffSet.has(s.skill));
+  const staleSet = new Set(stale.map(s => s.skill));
 
   const recentCounts = new Map<string, number>();
   const priorCounts = new Map<string, number>();
@@ -142,7 +143,7 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
 
   const declining: TrendEntry[] = skills
     .filter(s => {
-      if (staleSet.has(s.skill)) return false; // already classified as stale
+      if (staleSet.has(s.skill) || oneOffSet.has(s.skill)) return false; // already classified
       const recent = recentCounts.get(s.skill) ?? 0;
       const prior = priorCounts.get(s.skill) ?? 0;
       return prior > 0 && recent < prior * 0.5;
