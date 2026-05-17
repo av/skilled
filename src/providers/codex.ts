@@ -4,7 +4,7 @@ import { homedir } from "os";
 import type { SkillCall } from "../models.js";
 import type { Provider } from "./base.js";
 
-const CODEX_HOME = join(homedir(), ".codex");
+const CODEX_HOME = process.env.CODEX_HOME || join(homedir(), ".codex");
 const SESSIONS_DIR = join(CODEX_HOME, "sessions");
 
 const BUILTINS = new Set([

@@ -16,7 +16,9 @@ const BUILTINS: &[&str] = &[
 ];
 
 pub fn collect(home: &str) -> ProviderResult {
-    let sessions_dir = format!("{home}/.codex/sessions");
+    let codex_home = std::env::var("CODEX_HOME")
+        .unwrap_or_else(|_| format!("{home}/.codex"));
+    let sessions_dir = format!("{codex_home}/sessions");
     let available = Path::new(&sessions_dir).is_dir();
 
     if !available {

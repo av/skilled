@@ -4,7 +4,7 @@ import { homedir } from "os";
 import type { SkillCall } from "../models.js";
 import type { Provider } from "./base.js";
 
-const CLAUDE_HOME = join(homedir(), ".claude");
+const CLAUDE_HOME = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
 const HISTORY_PATH = join(CLAUDE_HOME, "history.jsonl");
 const PROJECTS_DIR = join(CLAUDE_HOME, "projects");
 

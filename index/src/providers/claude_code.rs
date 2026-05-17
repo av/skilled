@@ -17,7 +17,8 @@ const BUILTINS: &[&str] = &[
 ];
 
 pub fn collect(home: &str) -> ProviderResult {
-    let claude_home = format!("{home}/.claude");
+    let claude_home = std::env::var("CLAUDE_CONFIG_DIR")
+        .unwrap_or_else(|_| format!("{home}/.claude"));
     let history_path = format!("{claude_home}/history.jsonl");
     let projects_dir = format!("{claude_home}/projects");
 
