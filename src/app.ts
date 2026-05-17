@@ -517,6 +517,32 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
               state.visibleRows = ch;
               const { skills: sorted, scroll } = state;
               const total = sorted.length;
+
+              // Empty state: show guidance when no skills are found
+              if (total === 0) {
+                const emptyLines = allCalls.length === 0
+                  ? [
+                      "No skill invocations found.",
+                      "",
+                      "Skill usage is captured from:",
+                      "  Claude Code, Codex CLI, Droid, OpenCode, Grok",
+                      "",
+                      "Invoke a skill (e.g. /review, /bugbash) in any",
+                      "supported tool, then re-open this dashboard.",
+                      "",
+                      "Press 'q' to quit.",
+                    ]
+                  : [
+                      "No skills match the current filter.",
+                      "",
+                      "Press '/' to edit filter, ctrl-u to clear.",
+                    ];
+                for (let i = 0; i < Math.min(emptyLines.length, ch); i++) {
+                  buf.drawText(emptyLines[i]!, ox + 1, oy + 1 + i, colors.textDim, colors.bg);
+                }
+                return;
+              }
+
               const maxScroll = Math.max(0, total - ch);
               if (state.scroll > maxScroll) state.scroll = maxScroll;
 

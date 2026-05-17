@@ -216,7 +216,8 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
 
 function cmdList(providers: Provider[], cli: CliResult) {
   const calls = collectCalls(providers, cli.source, cli.project);
-  let skills = sortSkills(skillCounts(calls), cli.sort);
+  const allSkills = skillCounts(calls);
+  let skills = sortSkills(allSkills, cli.sort);
   if (cli.limit !== undefined) skills = skills.slice(0, cli.limit);
 
   if (cli.json) {
@@ -228,7 +229,15 @@ function cmdList(providers: Provider[], cli: CliResult) {
   }
 
   if (skills.length === 0) {
-    console.log("No skills found.");
+    if (cli.limit === 0) {
+      console.log("Nothing to show (--limit 0).");
+    } else if (allSkills.length > 0) {
+      console.log("No skills match the given filters.");
+    } else if (cli.source || cli.project) {
+      console.log("No skills found matching the given filters.\nTry 'skilled providers' to see available data sources.");
+    } else {
+      console.log("No skill invocations found.\nTry 'skilled providers' to check which data sources are detected.");
+    }
     return;
   }
 
@@ -317,7 +326,11 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
   }
 
   if (calls.length === 0) {
-    console.log("No calls found.");
+    if (cli.source || cli.project) {
+      console.log("No calls found matching the given filters.\nTry 'skilled providers' to see available data sources.");
+    } else {
+      console.log("No skill invocations found.\nTry 'skilled providers' to check which data sources are detected.");
+    }
     return;
   }
 
@@ -332,6 +345,11 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
   };
 
   const limit = cli.limit ?? 10;
+
+  if (limit === 0) {
+    console.log("Nothing to show (--limit 0).");
+    return;
+  }
 
   section("Most Used (last 4w)", audit.mostUsed.slice(0, limit).map(h => ({
     skill: h.skill.skill,
@@ -372,8 +390,8 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
 }
 
 function cmdCalls(providers: Provider[], cli: CliResult) {
-  let calls = collectCalls(providers, cli.source, cli.project);
-  calls.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const allCalls = collectCalls(providers, cli.source, cli.project);
+  let calls = allCalls.slice().sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   if (cli.limit !== undefined) calls = calls.slice(0, cli.limit);
 
   if (cli.json) {
@@ -388,7 +406,15 @@ function cmdCalls(providers: Provider[], cli: CliResult) {
   }
 
   if (calls.length === 0) {
-    console.log("No calls found.");
+    if (cli.limit === 0) {
+      console.log("Nothing to show (--limit 0).");
+    } else if (allCalls.length > 0) {
+      console.log("No calls match the given filters.");
+    } else if (cli.source || cli.project) {
+      console.log("No calls found matching the given filters.\nTry 'skilled providers' to see available data sources.");
+    } else {
+      console.log("No skill invocations found.\nTry 'skilled providers' to check which data sources are detected.");
+    }
     return;
   }
 
