@@ -1025,7 +1025,9 @@ export async function run(providers: Provider[]) {
 
     // --- audit mode ---
     if (state.auditOpen) {
-      const visRows = Math.max(1, state.mainArea.h);
+      // Subtract 2 for the top/bottom border rows of the overlay panel,
+      // matching the visible content height in the render path.
+      const visRows = Math.max(1, state.mainArea.h - 2);
       const maxScr = Math.max(0, state.auditLines.length - visRows);
       if (key.name === "escape" || key.name === "a") {
         state.auditOpen = false;
