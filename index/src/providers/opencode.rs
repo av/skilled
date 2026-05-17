@@ -96,7 +96,7 @@ pub fn collect(home: &str) -> ProviderResult {
 
         let ts = state["time"]["start"]
             .as_str()
-            .and_then(|s| super::claude_code::parse_iso_ms(s))
+            .and_then(super::claude_code::parse_iso_ms)
             .or_else(|| state["time"]["start"].as_i64())
             .unwrap_or(0);
 

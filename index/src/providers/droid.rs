@@ -93,7 +93,7 @@ fn parse_session(path: &Path, active_re: &Regex, calls: &mut Vec<SkillCall>) {
 
             let ts = entry["timestamp"]
                 .as_str()
-                .and_then(|s| super::claude_code::parse_iso_ms(s))
+                .and_then(super::claude_code::parse_iso_ms)
                 .or_else(|| entry["timestamp"].as_i64())
                 .unwrap_or(0);
 
