@@ -31,13 +31,14 @@ function isStale(): boolean {
   return Date.now() - statSync(INDEX_DB).mtimeMs > STALE_MS;
 }
 
-export function refreshIndex(quiet = true, json = false): boolean {
+export function refreshIndex(quiet = true, json = false, db?: string): boolean {
   const indexer = findIndexer();
   if (!indexer) return false;
 
   const args: string[] = [];
   if (quiet && !json) args.push("--quiet");
   if (json) args.push("--json");
+  if (db) args.push("--db", db);
   const result = spawnSync(indexer, args, {
     stdio: (quiet && !json) ? "pipe" : "inherit",
     timeout: 30_000,

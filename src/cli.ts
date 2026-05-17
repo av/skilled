@@ -26,6 +26,7 @@ Options:
   --project <name>    Filter by project path substring
   --sort <field>      Sort by: count (default), name, recent
   --limit <n>         Limit output rows
+  --db <path>         Custom index DB path (for 'index' command)
   --no-index          Skip auto-refresh of the index
   --splash            Show splash animation
 
@@ -48,6 +49,7 @@ interface CliResult {
   sort: "count" | "name" | "recent";
   limit?: number;
   skill?: string;
+  db?: string;
 }
 
 export function parseCli(argv: string[]): CliResult {
@@ -66,6 +68,7 @@ export function parseCli(argv: string[]): CliResult {
         limit: { type: "string" },
         splash: { type: "boolean", default: false },
         "no-index": { type: "boolean", default: false },
+        db: { type: "string" },
       },
       allowPositionals: true,
       strict: true,
@@ -92,30 +95,31 @@ export function parseCli(argv: string[]): CliResult {
   const noIndex = values["no-index"] ?? false;
   const source = values.source;
   const project = values.project;
+  const db = values.db;
 
   const cmd = positionals[0];
 
-  if (!cmd) return { command: "tui", json, noIndex, sort, limit, source, project };
+  if (!cmd) return { command: "tui", json, noIndex, sort, limit, source, project, db };
 
   switch (cmd) {
     case "list":
-      return { command: "list", json, noIndex, sort, limit, source, project };
+      return { command: "list", json, noIndex, sort, limit, source, project, db };
     case "detail": {
       const skill = positionals.slice(1).join(" ");
       if (!skill) {
         console.error("Error: detail requires a skill name\n\nUsage: skilled detail <skill>");
         process.exit(1);
       }
-      return { command: "detail", json, noIndex, sort, limit, source, project, skill };
+      return { command: "detail", json, noIndex, sort, limit, source, project, skill, db };
     }
     case "audit":
-      return { command: "audit", json, noIndex, sort, limit, source, project };
+      return { command: "audit", json, noIndex, sort, limit, source, project, db };
     case "providers":
-      return { command: "providers", json, noIndex, sort, limit, source, project };
+      return { command: "providers", json, noIndex, sort, limit, source, project, db };
     case "calls":
-      return { command: "calls", json, noIndex, sort, limit, source, project };
+      return { command: "calls", json, noIndex, sort, limit, source, project, db };
     case "index":
-      return { command: "index", json, noIndex: false, sort, limit, source, project };
+      return { command: "index", json, noIndex: false, sort, limit, source, project, db };
     default:
       console.error(`Unknown command: ${cmd}\n\nRun 'skilled --help' for usage.`);
       process.exit(1);

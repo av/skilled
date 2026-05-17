@@ -100,7 +100,13 @@ def download_binary(dest_dir):
                 zf.extractall(tmp_dir)
         else:
             with tarfile.open(fileobj=BytesIO(data), mode="r:gz") as tf:
-                tf.extractall(tmp_dir)
+                # Python 3.12+ emits DeprecationWarning without filter=;
+                # 3.14+ will change the default to 'data'. Use 'data' filter
+                # (safe: strips absolute paths and '..' components) when available.
+                if hasattr(tarfile, 'data_filter'):
+                    tf.extractall(tmp_dir, filter='data')
+                else:
+                    tf.extractall(tmp_dir)
 
         # Move extracted files to final destination only after successful extraction
         for name in os.listdir(tmp_dir):

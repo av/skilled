@@ -37,7 +37,7 @@ switch (cli.command) {
     await runSplash();
     break;
   case "index":
-    if (!refreshIndex(false, cli.json)) {
+    if (!refreshIndex(false, cli.json, cli.db)) {
       console.error("skilled-index not found. Build it with: cd index && cargo build --release");
       process.exit(1);
     }
