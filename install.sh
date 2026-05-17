@@ -93,6 +93,12 @@ main() {
     exit 1
   fi
 
+  # Normalize version to always have 'v' prefix (GitHub tags use v-prefixed names)
+  case "$version" in
+    v*) ;; # already has v prefix
+    *) version="v${version}" ;;
+  esac
+
   artifact="${BINARY}-${target}"
   url="https://github.com/${REPO}/releases/download/${version}/${artifact}.tar.gz"
 
