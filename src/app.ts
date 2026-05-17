@@ -236,6 +236,15 @@ export async function run(providers: Provider[]) {
     state.selectedIndex = Math.min(state.selectedIndex, Math.max(0, state.skills.length - 1));
     if (state.detailSkill) {
       if (state.skills.length > 0) {
+        // Try to keep the detail on the same skill after filtering/sorting.
+        // If the skill is still in the list, track it; otherwise follow selectedIndex.
+        const keepIdx = state.skills.findIndex(s => s.skill === state.detailSkill);
+        if (keepIdx >= 0) {
+          state.selectedIndex = keepIdx;
+          if (state.selectedIndex < state.scroll) {
+            state.scroll = state.selectedIndex;
+          }
+        }
         state.detailSkill = state.skills[state.selectedIndex]!.skill;
         state.detailData = skillDetail(state.filteredCalls, state.detailSkill);
       } else {
