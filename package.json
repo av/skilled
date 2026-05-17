@@ -1,6 +1,6 @@
 {
   "name": "skilled",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "TUI dashboard for skill usage stats across AI coding tools",
   "module": "src/main.ts",
   "type": "module",

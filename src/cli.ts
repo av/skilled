@@ -3,7 +3,7 @@ import type { Provider } from "./providers/base.js";
 import type { SkillCall } from "./models.js";
 import { skillCounts, skillDetail, auditSkills, projectShort, timeAgo } from "./data.js";
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 
 const HELP = `skilled — skill usage stats across AI coding tools
 

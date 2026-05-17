@@ -18,7 +18,7 @@ from setuptools.command.build_py import build_py
 
 REPO = "av/skilled"
 BINARY = "skilled"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 PLATFORM_MAP = {
     "Linux": "linux",
