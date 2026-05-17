@@ -252,6 +252,11 @@ pub fn parse_iso_ms(s: &str) -> Option<i64> {
         if frac.is_empty() {
             (s, 0)
         } else {
+            // Guard against non-ASCII input which would panic on byte slicing.
+            // Fractional seconds must be ASCII digits; anything else is corrupt data.
+            if !frac.is_ascii() {
+                return None;
+            }
             let padded = match frac.len() {
                 1 => format!("{frac}00"),
                 2 => format!("{frac}0"),
@@ -380,5 +385,13 @@ mod tests {
         let result = parse_iso_ms("2026-05-15T20:43:17.");
         assert!(result.is_some());
         assert_eq!(result.unwrap(), 1_778_877_797_000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_non_ascii_fractional_no_panic() {
+        // Non-ASCII characters in fractional seconds must not panic (would crash
+        // on byte slicing at non-char-boundary). Should return None gracefully.
+        let result = parse_iso_ms("2026-05-15T20:43:17.\u{1f525}Z");
+        assert!(result.is_none());
     }
 }

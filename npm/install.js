@@ -159,6 +159,29 @@ async function main() {
     if (fs.existsSync(indexPath)) {
       fs.chmodSync(indexPath, 0o755);
     }
+  } else {
+    // On Windows, npm's bin shim runs `node bin/skilled` which hits the stub script.
+    // The actual binary is `bin/skilled.exe`. Replace the stub with a launcher that
+    // spawns the .exe, passing through args, stdio, and exit code.
+    const launcherScript = `#!/usr/bin/env node
+"use strict";
+var cp = require("child_process");
+var path = require("path");
+var exe = path.join(__dirname, "${BINARY}.exe");
+var r = cp.spawnSync(exe, process.argv.slice(2), { stdio: "inherit" });
+if (r.error) {
+  if (r.error.code === "ENOENT") {
+    console.error("${BINARY}: binary not found at " + exe);
+    console.error("Run 'npm rebuild @avcodes/${BINARY}' or reinstall.");
+  } else {
+    console.error("${BINARY}: " + r.error.message);
+  }
+  process.exit(1);
+}
+process.exit(r.status !== null ? r.status : 1);
+`;
+    const launcherPath = path.join(binDir, BINARY);
+    fs.writeFileSync(launcherPath, launcherScript, { mode: 0o755 });
   }
 
   console.log(`Successfully installed ${BINARY} to ${binaryPath}`);
