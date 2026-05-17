@@ -1050,10 +1050,10 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
       } else if (key.name === "k" || key.name === "up") {
         state.auditScroll = Math.max(0, state.auditScroll - 1);
         renderer.requestRender();
-      } else if (key.name === "g") {
+      } else if (key.name === "g" && !key.shift) {
         state.auditScroll = 0;
         renderer.requestRender();
-      } else if (key.name === "G") {
+      } else if ((key.name === "G") || (key.name === "g" && key.shift)) {
         state.auditScroll = maxScr;
         renderer.requestRender();
       } else if (key.name === "d" && key.ctrl) {
@@ -1173,7 +1173,11 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
         break;
 
       case "g":
-        moveCursor(0);
+        if (key.shift) {
+          moveCursor(state.skills.length - 1);
+        } else {
+          moveCursor(0);
+        }
         renderer.requestRender();
         break;
 
