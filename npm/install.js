@@ -58,6 +58,15 @@ function getPlatformArtifact() {
     );
   }
 
+  if (platform === "windows" && arch === "arm64") {
+    throw new Error(
+      "Windows ARM64 prebuilt binaries are not available.\n" +
+      "Options:\n" +
+      "  - Use Windows x64 (the x64 binary runs on ARM64 via emulation)\n" +
+      "  - Install from source: git clone https://github.com/av/skilled && cd skilled && bun run build"
+    );
+  }
+
   const artifact = `${BINARY}-${platform}-${arch}`;
   const ext = platform === "windows" ? "zip" : "tar.gz";
   return { artifact, ext, platform };
