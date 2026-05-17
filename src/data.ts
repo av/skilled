@@ -157,6 +157,7 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
 
   const rising: TrendEntry[] = skills
     .filter(s => {
+      if (staleSet.has(s.skill) || oneOffSet.has(s.skill)) return false;
       const recent = recentCounts.get(s.skill) ?? 0;
       const prior = priorCounts.get(s.skill) ?? 0;
       return prior > 0 && recent >= prior * 1.5;
@@ -169,9 +170,10 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
     });
 
   const decliningSet = new Set(declining.map(d => d.skill.skill));
+  const risingSet = new Set(rising.map(r => r.skill.skill));
   const recentTotal = [...recentCounts.values()].reduce((sum, n) => sum + n, 0);
   const mostUsed = [...skills]
-    .filter(s => !decliningSet.has(s.skill))
+    .filter(s => !decliningSet.has(s.skill) && !risingSet.has(s.skill) && !staleSet.has(s.skill) && !oneOffSet.has(s.skill))
     .sort((a, b) => (recentCounts.get(b.skill) ?? 0) - (recentCounts.get(a.skill) ?? 0))
     .slice(0, 10)
     .filter(s => (recentCounts.get(s.skill) ?? 0) > 0)
