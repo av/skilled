@@ -85,9 +85,10 @@ export class DroidProvider implements Provider {
         if (!match) continue;
 
         const skill = match[1]!;
-        const ts = entry.timestamp
+        const rawDate = entry.timestamp
           ? new Date(entry.timestamp)
           : new Date(0);
+        const ts = Number.isFinite(rawDate.getTime()) ? rawDate : new Date(0);
 
         calls.push({
           skill,

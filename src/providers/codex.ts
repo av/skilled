@@ -96,9 +96,10 @@ export class CodexProvider implements Provider {
             const skill = match[1]!;
             if (BUILTINS.has(skill)) continue;
 
-            const ts = entry.timestamp
+            const rawDate = entry.timestamp
               ? new Date(entry.timestamp)
               : new Date(0);
+            const ts = Number.isFinite(rawDate.getTime()) ? rawDate : new Date(0);
 
             calls.push({
               skill,

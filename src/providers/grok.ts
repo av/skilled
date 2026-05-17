@@ -90,9 +90,10 @@ export class GrokProvider implements Provider {
               if (BUILTINS.has(skill)) continue;
 
               seen.add(skill);
-              const ts = record.timestamp
+              const rawTs = record.timestamp
                 ? new Date(record.timestamp * 1000)
                 : new Date(0);
+              const ts = Number.isFinite(rawTs.getTime()) ? rawTs : new Date(0);
 
               calls.push({
                 skill,

@@ -59,7 +59,8 @@ export class OpenCodeProvider implements Provider {
         if (!skill || BUILTINS.has(skill)) continue;
 
         const time = state.time ?? {};
-        const timestamp = time.start ? new Date(time.start) : new Date(0);
+        const rawDate = time.start ? new Date(time.start) : new Date(0);
+        const timestamp = Number.isFinite(rawDate.getTime()) ? rawDate : new Date(0);
 
         calls.push({
           skill,

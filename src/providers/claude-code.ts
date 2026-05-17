@@ -48,7 +48,8 @@ export class ClaudeCodeProvider implements Provider {
       const skill = match[1]!;
       if (BUILTINS.has(skill)) continue;
 
-      const ts = entry.timestamp ?? 0;
+      const rawTs = entry.timestamp ?? 0;
+      const ts = typeof rawTs === "number" && Number.isFinite(rawTs) ? rawTs : 0;
       const key = `${skill}:${ts}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -154,7 +155,8 @@ export class ClaudeCodeProvider implements Provider {
         const skill: string = input.skill ?? "";
         if (!skill || BUILTINS.has(skill)) continue;
 
-        const ts = entry.timestamp ? new Date(entry.timestamp).getTime() : 0;
+        const rawTs = entry.timestamp ? new Date(entry.timestamp).getTime() : 0;
+        const ts = Number.isFinite(rawTs) ? rawTs : 0;
         const key = `${skill}:${ts}`;
         if (seen.has(key)) continue;
         seen.add(key);
