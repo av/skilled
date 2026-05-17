@@ -10,18 +10,26 @@ const INDEX_DB = join(homedir(), ".skilled", "index.db");
 const STALE_MS = 60_000;
 
 function findIndexer(): string | null {
+  const isWin = process.platform === "win32";
+  const bin = isWin ? "skilled-index.exe" : "skilled-index";
   const candidates = [
-    join(dirname(process.execPath), "skilled-index"),
-    join(dirname(process.argv[0] ?? ""), "skilled-index"),
-    join(import.meta.dir, "..", "..", "index", "target", "release", "skilled-index"),
+    join(dirname(process.execPath), bin),
+    join(dirname(process.argv[0] ?? ""), bin),
+    join(import.meta.dir, "..", "..", "index", "target", "release", bin),
   ];
 
   for (const c of candidates) {
     if (existsSync(c)) return c;
   }
 
-  const which = spawnSync("command", ["-v", "skilled-index"], { stdio: "pipe", shell: true });
-  if (which.status === 0) return which.stdout.toString().trim();
+  // Fall back to PATH lookup
+  const cmd = isWin ? "where" : "command";
+  const args = isWin ? ["skilled-index"] : ["-v", "skilled-index"];
+  const which = spawnSync(cmd, args, { stdio: "pipe", shell: !isWin });
+  if (which.status === 0) {
+    // `where` on Windows may return multiple lines; use the first result
+    return which.stdout.toString().trim().split(/\r?\n/)[0] ?? null;
+  }
 
   return null;
 }

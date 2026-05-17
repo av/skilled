@@ -49,7 +49,9 @@ fn main() {
         i += 1;
     }
 
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
+    let home = env::var("HOME")
+        .or_else(|_| env::var("USERPROFILE"))
+        .unwrap_or_else(|_| "/tmp".into());
 
     let db_file = match db_path {
         Some(p) => PathBuf::from(p),
