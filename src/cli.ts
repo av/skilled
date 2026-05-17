@@ -197,11 +197,14 @@ export function runCli(providers: Provider[], cli: CliResult): void {
 }
 
 function cmdProviders(providers: Provider[], cli: CliResult) {
-  let rows = providers.map(p => ({
-    name: p.name,
-    available: p.available(),
-    calls: p.available() ? p.collect().length : 0,
-  }));
+  let rows = providers.map(p => {
+    let calls = 0;
+    const avail = p.available();
+    if (avail) {
+      try { calls = p.collect().length; } catch { /* skip failing provider */ }
+    }
+    return { name: p.name, available: avail, calls };
+  });
 
   if (cli.source) {
     rows = rows.filter(r => matchSource(r.name, cli.source!));
