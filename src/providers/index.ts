@@ -31,9 +31,11 @@ function isStale(dbPath: string): boolean {
   return Date.now() - statSync(dbPath).mtimeMs > STALE_MS;
 }
 
-export function refreshIndex(quiet = true, json = false, db?: string): boolean {
+export type RefreshResult = "ok" | "not-found" | "failed";
+
+export function refreshIndex(quiet = true, json = false, db?: string): RefreshResult {
   const indexer = findIndexer();
-  if (!indexer) return false;
+  if (!indexer) return "not-found";
 
   const args: string[] = [];
   if (quiet && !json) args.push("--quiet");
@@ -43,13 +45,13 @@ export function refreshIndex(quiet = true, json = false, db?: string): boolean {
     stdio: (quiet && !json) ? "pipe" : "inherit",
     timeout: 30_000,
   });
-  return result.status === 0;
+  return result.status === 0 ? "ok" : "failed";
 }
 
 export function ensureIndex(db?: string): boolean {
   const dbPath = db ?? INDEX_DB;
   if (!isStale(dbPath)) return true;
-  return refreshIndex(true, false, db);
+  return refreshIndex(true, false, db) === "ok";
 }
 
 export function indexAvailable(): boolean {

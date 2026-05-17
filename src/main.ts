@@ -42,12 +42,17 @@ switch (cli.command) {
   case "splash":
     await runSplash();
     break;
-  case "index":
-    if (!refreshIndex(false, cli.json, cli.db)) {
+  case "index": {
+    const result = refreshIndex(false, cli.json, cli.db);
+    if (result === "not-found") {
       console.error("skilled-index not found. Build it with: cd index && cargo build --release");
+      process.exit(1);
+    } else if (result === "failed") {
+      console.error("skilled-index exited with an error. Check the output above for details.");
       process.exit(1);
     }
     break;
+  }
   default:
     runCli(getProviders(cli.noIndex, cli.db), cli);
     break;
