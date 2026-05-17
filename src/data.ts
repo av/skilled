@@ -182,7 +182,7 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
     .sort((a, b) => b.projects - a.projects);
 
   const singleProject = skills
-    .filter(s => s.projects === 1)
+    .filter(s => s.projects === 1 && !oneOffSet.has(s.skill))
     .sort((a, b) => b.count - a.count);
 
   return { stale, oneOff, declining, rising, mostUsed, crossProject, singleProject };
