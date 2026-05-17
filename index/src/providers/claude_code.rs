@@ -248,13 +248,17 @@ pub fn parse_iso_ms(s: &str) -> Option<i64> {
     let sec_str = time_parts[2];
     let (sec_int, millis) = if let Some((s, frac)) = sec_str.split_once('.') {
         let s: i64 = s.parse().ok()?;
-        let padded = match frac.len() {
-            1 => format!("{frac}00"),
-            2 => format!("{frac}0"),
-            _ => frac[..3].to_string(),
-        };
-        let ms: i64 = padded.parse().ok()?;
-        (s, ms)
+        if frac.is_empty() {
+            (s, 0)
+        } else {
+            let padded = match frac.len() {
+                1 => format!("{frac}00"),
+                2 => format!("{frac}0"),
+                _ => frac[..3].to_string(),
+            };
+            let ms: i64 = padded.parse().ok()?;
+            (s, ms)
+        }
     } else {
         (sec_str.parse::<i64>().ok()?, 0)
     };
@@ -358,5 +362,22 @@ mod tests {
         let colon = parse_iso_ms("2026-05-15T20:43:17.000+02:00").unwrap();
         let compact = parse_iso_ms("2026-05-15T20:43:17.000+0200").unwrap();
         assert_eq!(colon, compact);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_empty_fractional() {
+        // A trailing dot with no fractional digits (e.g., "17.Z" after tz strip)
+        // should not panic — treat as zero milliseconds.
+        let result = parse_iso_ms("2026-05-15T20:43:17.Z");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), 1_778_877_797_000);
+    }
+
+    #[test]
+    fn test_parse_iso_ms_empty_fractional_no_tz() {
+        // Trailing dot with no fractional digits and no timezone suffix
+        let result = parse_iso_ms("2026-05-15T20:43:17.");
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), 1_778_877_797_000);
     }
 }
