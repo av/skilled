@@ -31,7 +31,7 @@ pub fn collect(home: &str) -> ProviderResult {
     }
 
     let builtins: HashSet<&str> = BUILTINS.iter().copied().collect();
-    let skill_re = Regex::new(r"^/([a-zA-Z][a-zA-Z0-9_-]*)$").unwrap();
+    let skill_re = Regex::new(r"^/([a-zA-Z][a-zA-Z0-9_-]*)(?:\s|$)").unwrap();
     let mut seen = HashSet::new();
     let mut calls = Vec::new();
 

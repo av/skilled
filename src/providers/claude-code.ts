@@ -15,7 +15,7 @@ const BUILTINS = new Set([
   "remote-env", "remote-control", "fast",
 ]);
 
-const SKILL_RE = /^\/([a-zA-Z][a-zA-Z0-9_-]*)$/;
+const SKILL_RE = /^\/([a-zA-Z][a-zA-Z0-9_-]*)(?:\s|$)/;
 
 export class ClaudeCodeProvider implements Provider {
   readonly name = "Claude Code";
