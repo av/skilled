@@ -201,7 +201,7 @@ function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: numbe
   return { grid, maxVal };
 }
 
-export async function run(providers: Provider[]) {
+export async function run(providers: Provider[], getProviders?: () => Provider[]) {
   const allCalls: SkillCall[] = [];
   const sourceNames: string[] = [];
   for (const p of providers) {
@@ -1100,7 +1100,7 @@ export async function run(providers: Provider[]) {
 
       case "r":
         renderer.destroy();
-        run(providers);
+        run(getProviders ? getProviders() : providers, getProviders);
         break;
 
       case "s": {
