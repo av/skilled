@@ -26,9 +26,9 @@ function findIndexer(): string | null {
   return null;
 }
 
-function isStale(): boolean {
-  if (!existsSync(INDEX_DB)) return true;
-  return Date.now() - statSync(INDEX_DB).mtimeMs > STALE_MS;
+function isStale(dbPath: string): boolean {
+  if (!existsSync(dbPath)) return true;
+  return Date.now() - statSync(dbPath).mtimeMs > STALE_MS;
 }
 
 export function refreshIndex(quiet = true, json = false, db?: string): boolean {
@@ -46,21 +46,23 @@ export function refreshIndex(quiet = true, json = false, db?: string): boolean {
   return result.status === 0;
 }
 
-export function ensureIndex(): boolean {
-  if (!isStale()) return true;
-  return refreshIndex();
+export function ensureIndex(db?: string): boolean {
+  const dbPath = db ?? INDEX_DB;
+  if (!isStale(dbPath)) return true;
+  return refreshIndex(true, false, db);
 }
 
 export function indexAvailable(): boolean {
   return findIndexer() !== null;
 }
 
-export function createIndexProviders(): Provider[] | null {
-  if (!existsSync(INDEX_DB)) return null;
+export function createIndexProviders(customDb?: string): Provider[] | null {
+  const dbPath = customDb ?? INDEX_DB;
+  if (!existsSync(dbPath)) return null;
 
   let db: InstanceType<typeof Database>;
   try {
-    db = new Database(INDEX_DB, { readonly: true });
+    db = new Database(dbPath, { readonly: true });
   } catch {
     return null;
   }

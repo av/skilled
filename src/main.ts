@@ -18,10 +18,10 @@ function tsProviders(): Provider[] {
   ];
 }
 
-function getProviders(noIndex: boolean): Provider[] {
+function getProviders(noIndex: boolean, db?: string): Provider[] {
   if (!noIndex) {
-    ensureIndex();
-    const indexed = createIndexProviders();
+    ensureIndex(db);
+    const indexed = createIndexProviders(db);
     if (indexed) return indexed;
   }
   return tsProviders();
@@ -31,7 +31,7 @@ const cli = parseCli(process.argv);
 
 switch (cli.command) {
   case "tui":
-    await run(getProviders(cli.noIndex));
+    await run(getProviders(cli.noIndex, cli.db));
     break;
   case "splash":
     await runSplash();
@@ -43,6 +43,6 @@ switch (cli.command) {
     }
     break;
   default:
-    runCli(getProviders(cli.noIndex), cli);
+    runCli(getProviders(cli.noIndex, cli.db), cli);
     break;
 }

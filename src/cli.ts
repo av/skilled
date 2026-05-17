@@ -26,7 +26,7 @@ Options:
   --project <name>    Filter by project path substring
   --sort <field>      Sort by: count (default), name, recent
   --limit <n>         Limit output rows
-  --db <path>         Custom index DB path (for 'index' command)
+  --db <path>         Custom index DB path
   --no-index          Skip auto-refresh of the index
   --splash            Show splash animation
 

@@ -63,12 +63,16 @@ function getPlatformArtifact() {
   return { artifact, ext, platform };
 }
 
-function followRedirects(url) {
+function followRedirects(url, maxRedirects = 10) {
   return new Promise((resolve, reject) => {
+    if (maxRedirects <= 0) {
+      reject(new Error("Too many redirects (exceeded limit of 10)"));
+      return;
+    }
     https
       .get(url, { headers: { "User-Agent": "skilled-npm" } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          followRedirects(res.headers.location).then(resolve, reject);
+          followRedirects(res.headers.location, maxRedirects - 1).then(resolve, reject);
         } else if (res.statusCode === 200) {
           resolve(res);
         } else {
