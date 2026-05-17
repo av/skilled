@@ -53,6 +53,10 @@ switch (cli.command) {
     }
     break;
   }
+  case "help":
+  case "version":
+    runCli([], cli);
+    break;
   default:
     runCli(getProviders(cli.noIndex, cli.db), cli);
     break;

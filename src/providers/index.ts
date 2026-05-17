@@ -56,10 +56,18 @@ export function refreshIndex(quiet = true, json = false, db?: string): RefreshRe
   return result.status === 0 ? "ok" : "failed";
 }
 
+function tildefy(p: string): string {
+  const home = homedir();
+  return p.startsWith(home) ? "~" + p.slice(home.length) : p;
+}
+
 export function ensureIndex(db?: string): boolean {
   const dbPath = db ?? INDEX_DB;
-  if (!isStale(dbPath)) return true;
-  return refreshIndex(true, false, db) === "ok";
+  if (!isStale(dbPath)) {
+    console.error(`index: ${tildefy(dbPath)} (cached)`);
+    return true;
+  }
+  return refreshIndex(false, false, db) === "ok";
 }
 
 export function createIndexProviders(customDb?: string): Provider[] | null {

@@ -58,9 +58,8 @@ fn main() {
         None => PathBuf::from(&home).join(".skilled").join("index.db"),
     };
 
-    let results = providers::all_providers(&home);
-
-    let available_count = results.iter().filter(|r| r.available).count();
+    let progress = !quiet && !json;
+    let results = providers::all_providers(&home, progress);
 
     match db::write_index(&db_file, &results) {
         Ok(stats) => {
@@ -81,8 +80,8 @@ fn main() {
                 println!("{}", serde_json::to_string_pretty(&output).unwrap());
             } else if !quiet {
                 eprintln!(
-                    "indexed {} calls from {} providers in {}ms",
-                    stats.total_calls, available_count, stats.elapsed_ms
+                    "wrote {} calls to {} in {}ms",
+                    stats.total_calls, db_file.display(), stats.elapsed_ms
                 );
             }
         }
