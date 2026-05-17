@@ -205,10 +205,14 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
   const allCalls: SkillCall[] = [];
   const sourceNames: string[] = [];
   for (const p of providers) {
-    if (p.available()) {
-      const calls = p.collect();
-      allCalls.push(...calls);
-      if (calls.length > 0) sourceNames.push(p.name);
+    try {
+      if (p.available()) {
+        const calls = p.collect();
+        allCalls.push(...calls);
+        if (calls.length > 0) sourceNames.push(p.name);
+      }
+    } catch {
+      // Provider threw — skip it and continue with the others.
     }
   }
   allCalls.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());

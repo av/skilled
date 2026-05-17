@@ -137,8 +137,12 @@ function collectCalls(providers: Provider[], source?: string, project?: string):
   let calls: SkillCall[] = [];
   for (const p of providers) {
     if (source && !matchSource(p.name, source)) continue;
-    if (!p.available()) continue;
-    calls = calls.concat(p.collect());
+    try {
+      if (!p.available()) continue;
+      calls = calls.concat(p.collect());
+    } catch {
+      // Provider threw — skip it and continue with the others.
+    }
   }
   if (project) {
     calls = calls.filter(c => c.project.includes(project));

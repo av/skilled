@@ -40,7 +40,12 @@ export class GrokProvider implements Provider {
     }
 
     for (const projEntry of projectDirs) {
-      const project = decodeURIComponent(projEntry);
+      let project: string;
+      try {
+        project = decodeURIComponent(projEntry);
+      } catch {
+        project = projEntry; // Use raw name if percent-decoding fails
+      }
       const projDir = join(SESSIONS_DIR, projEntry);
 
       // Walk session subdirectories

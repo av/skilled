@@ -31,7 +31,13 @@ export class ClaudeCodeProvider implements Provider {
     const seen = new Set<string>();
 
     // Source 1: history.jsonl — tracks /slash-command invocations
-    const lines = readFileSync(HISTORY_PATH, "utf-8").split("\n");
+    let historyContent: string;
+    try {
+      historyContent = readFileSync(HISTORY_PATH, "utf-8");
+    } catch {
+      historyContent = "";
+    }
+    const lines = historyContent.split("\n");
     for (const line of lines) {
       if (!line.trim()) continue;
       let entry: any;
