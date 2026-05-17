@@ -66,8 +66,8 @@ pub fn collect(home: &str) -> ProviderResult {
         }
 
         let project = urlencoding::decode(&dir_name)
-            .unwrap_or_default()
-            .to_string();
+            .map(|s| s.into_owned())
+            .unwrap_or_else(|_| dir_name.clone());
         let proj_path = proj_entry.path();
 
         let session_dirs = match fs::read_dir(&proj_path) {

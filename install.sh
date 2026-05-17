@@ -115,10 +115,17 @@ main() {
 
   echo "Installing to ${install_dir}..."
   install -m 755 "${tmpdir}/${BINARY}" "${install_dir}/${BINARY}"
-  install -m 755 "${tmpdir}/${BINARY}-index" "${install_dir}/${BINARY}-index"
+  if [ -f "${tmpdir}/${BINARY}-index" ]; then
+    install -m 755 "${tmpdir}/${BINARY}-index" "${install_dir}/${BINARY}-index"
+  fi
 
   echo ""
-  echo "Successfully installed ${BINARY} and ${BINARY}-index to ${install_dir}/"
+  if [ -f "${install_dir}/${BINARY}-index" ]; then
+    echo "Successfully installed ${BINARY} and ${BINARY}-index to ${install_dir}/"
+  else
+    echo "Successfully installed ${BINARY} to ${install_dir}/"
+    echo "Note: ${BINARY}-index was not found in the archive (optional performance enhancement)."
+  fi
 
   case ":$PATH:" in
     *":${install_dir}:"*) ;;
