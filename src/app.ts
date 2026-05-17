@@ -234,9 +234,16 @@ export async function run(providers: Provider[]) {
     state.uniqueSources = new Set(filtered.map((c) => c.source)).size;
     state.scroll = 0;
     state.selectedIndex = Math.min(state.selectedIndex, Math.max(0, state.skills.length - 1));
-    if (state.detailSkill && state.skills.length > 0) {
-      state.detailSkill = state.skills[state.selectedIndex]!.skill;
-      state.detailData = skillDetail(state.filteredCalls, state.detailSkill);
+    if (state.detailSkill) {
+      if (state.skills.length > 0) {
+        state.detailSkill = state.skills[state.selectedIndex]!.skill;
+        state.detailData = skillDetail(state.filteredCalls, state.detailSkill);
+      } else {
+        // Filter eliminated all skills — close the detail view to avoid
+        // showing stale data that doesn't reflect the active filter.
+        state.detailSkill = null;
+        state.detailData = null;
+      }
     }
   }
 
