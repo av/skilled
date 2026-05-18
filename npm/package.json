@@ -1,6 +1,6 @@
 {
   "name": "@avcodes/skilled",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "TUI dashboard for skill usage stats across AI coding tools",
   "license": "MIT",
   "repository": {
