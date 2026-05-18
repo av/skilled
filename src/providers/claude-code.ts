@@ -121,7 +121,7 @@ export class ClaudeCodeProvider implements Provider {
       return;
     }
 
-    const sessionId = path.replace(/.*\//, "").replace(".jsonl", "");
+    const sessionId = path.replace(/.*[\\/]/, "").replace(".jsonl", "");
 
     // Extract project path (cwd) from session entries rather than
     // decoding the directory name, which is ambiguous when paths contain hyphens.

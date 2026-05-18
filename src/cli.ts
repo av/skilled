@@ -214,6 +214,15 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
   if (cli.source) {
     rows = rows.filter(r => matchSource(r.name, cli.source!));
   }
+  switch (cli.sort) {
+    case "name":
+      rows.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "recent": // no timestamp for providers, sort by calls as fallback
+    case "count":
+      rows.sort((a, b) => b.calls - a.calls);
+      break;
+  }
   if (cli.limit !== undefined) rows = rows.slice(0, cli.limit);
 
   if (cli.json) {
