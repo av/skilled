@@ -51,7 +51,9 @@ export function projectShort(path: string): string {
 }
 
 export function timeAgo(date: Date): string {
-  const diff = Date.now() - date.getTime();
+  const ts = date.getTime();
+  if (!Number.isFinite(ts)) return "unknown";
+  const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "now";
   if (mins < 60) return `${mins}m`;
