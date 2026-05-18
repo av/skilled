@@ -285,8 +285,10 @@ function cmdDetail(providers: Provider[], cli: CliResult) {
   }
 
   if (cli.json) {
+    const limitedProjects = cli.limit !== undefined ? detail.projects.slice(0, cli.limit) : detail.projects;
     console.log(JSON.stringify({
       ...detail,
+      projects: limitedProjects,
       firstUsed: detail.firstUsed.toISOString(),
       lastUsed: detail.lastUsed.toISOString(),
     }, null, 2));
@@ -412,9 +414,20 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
   console.log();
 }
 
+function sortCalls(calls: SkillCall[], sort: CliResult["sort"]): SkillCall[] {
+  switch (sort) {
+    case "name":
+      return calls.sort((a, b) => a.skill.localeCompare(b.skill) || b.timestamp.getTime() - a.timestamp.getTime());
+    case "recent":
+      return calls.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    default: // "count" — same as recent for raw calls (no aggregation)
+      return calls.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+}
+
 function cmdCalls(providers: Provider[], cli: CliResult) {
   const allCalls = collectCalls(providers, cli.source, cli.project);
-  let calls = allCalls.slice().sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  let calls = sortCalls(allCalls.slice(), cli.sort);
   if (cli.limit !== undefined) calls = calls.slice(0, cli.limit);
 
   if (cli.json) {
