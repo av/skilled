@@ -40,7 +40,7 @@
 # provider
 
 ## claude-code
-- label: skill names extracted from display field via regex /^\/([a-zA-Z][a-zA-Z0-9_-]*)$/
+- label: skill names extracted from display field via regex /^\/([a-zA-Z][a-zA-Z0-9_-]*)(?:\s|$)/
   command: grep -q 'a-zA-Z.*a-zA-Z0-9_' src/providers/claude-code.ts
 - label: builtin commands (clear, model, usage, help, etc.) are filtered out
   command: grep -q 'BUILTINS' src/providers/claude-code.ts
