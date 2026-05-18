@@ -1,10 +1,10 @@
-[![release](https://shieldcn.dev/github/release/av/skilled.png)](https://github.com/av/skilled/releases)
-[![npm](https://shieldcn.dev/npm/@avcodes/skilled.png)](https://www.npmjs.com/package/@avcodes/skilled)
-[![pypi](https://shieldcn.dev/pypi/skilled.png)](https://pypi.org/project/skilled/)
-[![license](https://shieldcn.dev/npm/license/@avcodes/skilled.png)](https://github.com/av/skilled/blob/main/LICENSE)
-[![TypeScript + Rust](https://shieldcn.dev/badge/TypeScript%20%2B%20Rust-blue.png)](https://github.com/av/skilled)
-
 [![screenshot](./assets/screenshot.png)](https://www.youtube.com/watch?v=Lmq8A9R49ZI)
+
+[![release](https://shieldcn.dev/github/release/av/skilled.png?variant=secondary)](https://github.com/av/skilled/releases)
+[![npm](https://shieldcn.dev/npm/@avcodes/skilled.png?variant=secondary)](https://www.npmjs.com/package/@avcodes/skilled)
+[![pypi](https://shieldcn.dev/pypi/skilled.png?variant=secondary)](https://pypi.org/project/skilled/)
+[![license](https://shieldcn.dev/npm/license/@avcodes/skilled.png?variant=secondary)](https://github.com/av/skilled/blob/main/LICENSE)
+[![TypeScript + Rust](https://shieldcn.dev/badge/TypeScript%20%2B%20Rust-blue.png?variant=secondary)](https://github.com/av/skilled)
 
 Your AI coding tools keep traces. Skilled reads them.
 
