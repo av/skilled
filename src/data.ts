@@ -153,7 +153,7 @@ export function auditSkills(calls: SkillCall[], skills: SkillCount[]): SkillAudi
       if (staleSet.has(s.skill) || oneOffSet.has(s.skill)) return false; // already classified
       const recent = recentCounts.get(s.skill) ?? 0;
       const prior = priorCounts.get(s.skill) ?? 0;
-      return prior > 0 && recent < prior * 0.5;
+      return prior > 0 && recent <= prior * 0.5;
     })
     .map(s => {
       const recentCount = recentCounts.get(s.skill) ?? 0;

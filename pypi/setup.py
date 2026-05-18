@@ -60,6 +60,14 @@ def get_artifact_info():
             "  - Install from source: git clone https://github.com/av/skilled && cd skilled && bun run build"
         )
 
+    if plat == "windows" and arch == "arm64":
+        raise RuntimeError(
+            "Windows ARM64 prebuilt binaries are not available.\n"
+            "Options:\n"
+            "  - Use Windows x64 (the x64 binary runs on ARM64 via emulation)\n"
+            "  - Install from source: git clone https://github.com/av/skilled && cd skilled && bun run build"
+        )
+
     artifact = f"{BINARY}-{plat}-{arch}"
     ext = "zip" if plat == "windows" else "tar.gz"
     return artifact, ext, plat

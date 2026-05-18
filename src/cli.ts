@@ -471,5 +471,9 @@ function cmdCalls(providers: Provider[], cli: CliResult) {
   for (const c of calls) {
     console.log(`${pad(c.skill, maxSkill)} ${pad(projectShort(c.project), maxProj)} ${pad(c.source, 14)} ${c.timestamp.toISOString().slice(0, 19).replace("T", " ")}`);
   }
-  console.log(`\n${calls.length} calls`);
+  if (cli.limit !== undefined && calls.length < allCalls.length) {
+    console.log(`\n${calls.length} of ${allCalls.length} calls`);
+  } else {
+    console.log(`\n${calls.length} calls`);
+  }
 }
