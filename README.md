@@ -80,7 +80,7 @@ Skilled auto-detects which tools are installed. No configuration needed. If the 
 
 Each tool writes session traces to predictable local paths. Skilled has a provider for each one that parses those files and extracts skill invocations (slash commands, tool calls, skill triggers) into a common format: skill name, timestamp, project, session, source.
 
-From there: frequency counts, weekly trends, hourly distribution, per-project breakdowns, and audit heuristics (rising = 50%+ increase over 4 weeks, stale = unused 30+ days, etc.).
+From there: frequency counts, weekly trends, hourly distribution, per-project breakdowns, and audit heuristics (rising = 50%+ increase over 4 weeks, stale = unused 28+ days, etc.).
 
 The TUI renders at 30 fps using [@opentui/core](https://github.com/nicholasgasior/opentui). Bar charts use 8-level Unicode block elements for sub-character precision. The heatmap uses a 5-level green intensity ramp.
 

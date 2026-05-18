@@ -23,8 +23,8 @@
 # architecture
 - label: provider pattern: providers implement Provider interface (name, available, collect)
   command: grep -q 'interface Provider' src/providers/base.ts
-- label: single provider: ClaudeCodeProvider reads ~/.claude/history.jsonl
-  command: grep -q 'ClaudeCodeProvider' src/providers/claude-code.ts
+- label: five providers: ClaudeCode, Codex, Droid, OpenCode, Grok
+  command: grep -q 'ClaudeCodeProvider' src/providers/claude-code.ts && grep -q 'CodexProvider' src/providers/codex.ts && grep -q 'DroidProvider' src/providers/droid.ts && grep -q 'OpenCodeProvider' src/providers/opencode.ts && grep -q 'GrokProvider' src/providers/grok.ts
 - label: app.ts run() accepts Provider[] and renders the full TUI
   command: grep -q 'providers: Provider\[\]' src/app.ts
 - data flow: Provider.collect() → aggregation (data.ts) → TUI (app.ts)
@@ -34,8 +34,8 @@
   command: grep -q 'SkillCall' src/models.ts && grep -q 'SkillCount' src/models.ts && grep -q 'DayCount' src/models.ts
 - label: SkillCall captures: skill, timestamp, project, sessionId, source
   command: grep -q 'sessionId' src/models.ts && grep -q 'source: string' src/models.ts
-- label: aggregation functions: skillCounts, dailyCounts, weeklyCounts (data.ts)
-  command: grep -q 'export function skillCounts' src/data.ts && grep -q 'export function dailyCounts' src/data.ts && grep -q 'export function weeklyCounts' src/data.ts
+- label: aggregation functions: skillCounts, dailyCounts, hourlyCounts (data.ts)
+  command: grep -q 'export function skillCounts' src/data.ts && grep -q 'export function dailyCounts' src/data.ts && grep -q 'export function hourlyCounts' src/data.ts
 
 # provider
 
@@ -78,4 +78,4 @@
 - enter key on bar chart opens skill detail panel replacing right column @implemented
 - skill detail panel shows per-project usage breakdown, session count, first/last used dates, and weekly usage sparkline @implemented
 - 'a' key toggles audit view replacing main layout with library health insights @implemented
-- audit view shows: stale skills (unused 30+ days), one-off skills (used once), declining skills (usage dropped 50%+ over last 4 weeks vs prior 4) @implemented
+- audit view shows: stale skills (unused 28+ days), one-off skills (used once), declining skills (usage dropped 50%+ over last 4 weeks vs prior 4) @implemented
