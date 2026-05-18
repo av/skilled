@@ -82,7 +82,12 @@ export function parseCli(argv: string[]): CliResult {
   if (values.version) return { command: "version", json: false, noIndex: false, sort: "count" };
   if (values.splash) return { command: "splash", json: false, noIndex: false, sort: "count" };
 
-  const sort = (["count", "name", "recent"].includes(values.sort!) ? values.sort : "count") as CliResult["sort"];
+  const validSorts = ["count", "name", "recent"];
+  if (values.sort !== undefined && !validSorts.includes(values.sort)) {
+    console.error(`Error: --sort must be one of: ${validSorts.join(", ")}`);
+    process.exit(1);
+  }
+  const sort = (values.sort ?? "count") as CliResult["sort"];
   let limit: number | undefined;
   if (values.limit !== undefined) {
     limit = parseInt(values.limit, 10);
@@ -209,6 +214,7 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
   if (cli.source) {
     rows = rows.filter(r => matchSource(r.name, cli.source!));
   }
+  if (cli.limit !== undefined) rows = rows.slice(0, cli.limit);
 
   if (cli.json) {
     console.log(JSON.stringify(rows, null, 2));
@@ -295,9 +301,13 @@ function cmdDetail(providers: Provider[], cli: CliResult) {
   console.log();
 
   if (detail.projects.length > 0) {
+    const visibleProjects = cli.limit !== undefined ? detail.projects.slice(0, cli.limit) : detail.projects;
     console.log("Projects:");
-    for (const p of detail.projects) {
+    for (const p of visibleProjects) {
       console.log(`  ${pad(p.name, 30)} ${p.count}`);
+    }
+    if (cli.limit !== undefined && detail.projects.length > cli.limit) {
+      console.log(`  ... and ${detail.projects.length - cli.limit} more`);
     }
     console.log();
   }
