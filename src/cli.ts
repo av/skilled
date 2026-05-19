@@ -282,7 +282,11 @@ function cmdList(providers: Provider[], cli: CliResult) {
   for (const s of skills) {
     console.log(`${pad(s.skill, nameW)} ${padLeft(String(s.count), 6)} ${padLeft(String(s.projects), 5)} ${padLeft(String(s.sessions), 5)} ${timeAgo(s.lastUsed)}`);
   }
-  console.log(`\n${skills.length} skills, ${calls.length} total calls`);
+  if (cli.limit !== undefined && skills.length < allSkills.length) {
+    console.log(`\n${skills.length} of ${allSkills.length} skills, ${calls.length} total calls`);
+  } else {
+    console.log(`\n${skills.length} skills, ${calls.length} total calls`);
+  }
 }
 
 function cmdDetail(providers: Provider[], cli: CliResult) {
