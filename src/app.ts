@@ -1156,7 +1156,10 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
 
       case "r":
         renderer.destroy();
-        run(getProviders ? getProviders() : providers, getProviders);
+        run(getProviders ? getProviders() : providers, getProviders).catch((err) => {
+          console.error("Error refreshing dashboard:", err?.message ?? err);
+          process.exit(1);
+        });
         break;
 
       case "s": {

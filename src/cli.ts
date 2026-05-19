@@ -228,10 +228,15 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
       rows.sort((a, b) => b.calls - a.calls);
       break;
   }
+  const allRows = rows;
   if (cli.limit !== undefined) rows = rows.slice(0, cli.limit);
 
   if (cli.json) {
-    console.log(JSON.stringify(rows, null, 2));
+    if (cli.limit !== undefined && rows.length < allRows.length) {
+      console.log(JSON.stringify({ total: allRows.length, items: rows }, null, 2));
+    } else {
+      console.log(JSON.stringify(rows, null, 2));
+    }
     return;
   }
 
@@ -254,10 +259,15 @@ function cmdList(providers: Provider[], cli: CliResult) {
   if (cli.limit !== undefined) skills = skills.slice(0, cli.limit);
 
   if (cli.json) {
-    console.log(JSON.stringify(skills.map(s => ({
+    const items = skills.map(s => ({
       ...s,
       lastUsed: s.lastUsed.toISOString(),
-    })), null, 2));
+    }));
+    if (cli.limit !== undefined && skills.length < allSkills.length) {
+      console.log(JSON.stringify({ total: allSkills.length, items }, null, 2));
+    } else {
+      console.log(JSON.stringify(items, null, 2));
+    }
     return;
   }
 
@@ -449,21 +459,24 @@ function cmdCalls(providers: Provider[], cli: CliResult) {
   if (cli.limit !== undefined) calls = calls.slice(0, cli.limit);
 
   if (cli.json) {
-    console.log(JSON.stringify(calls.map(c => ({
+    const items = calls.map(c => ({
       skill: c.skill,
       timestamp: c.timestamp.toISOString(),
       project: c.project,
       sessionId: c.sessionId,
       source: c.source,
-    })), null, 2));
+    }));
+    if (cli.limit !== undefined && calls.length < allCalls.length) {
+      console.log(JSON.stringify({ total: allCalls.length, items }, null, 2));
+    } else {
+      console.log(JSON.stringify(items, null, 2));
+    }
     return;
   }
 
   if (calls.length === 0) {
     if (cli.limit === 0) {
       console.log("Nothing to show (--limit 0).");
-    } else if (allCalls.length > 0) {
-      console.log("No calls match the given filters.");
     } else if (cli.source || cli.project) {
       console.log("No calls found matching the given filters.\nTry 'skilled providers' to see available data sources.");
     } else {

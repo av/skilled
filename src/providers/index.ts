@@ -61,7 +61,7 @@ export function ensureIndex(db?: string): boolean {
   if (!isStale(dbPath)) {
     return true;
   }
-  return refreshIndex(false, false, db) === "ok";
+  return refreshIndex(true, false, db) === "ok";
 }
 
 export function createIndexProviders(customDb?: string): Provider[] | null {
