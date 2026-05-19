@@ -566,10 +566,10 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
               if (state.scroll > maxScroll) state.scroll = maxScroll;
 
               const labelW = Math.min(22, Math.floor(cw * 0.35));
-              const countW = 4;
+              const maxCount = sorted.reduce((m, s) => Math.max(m, s.count), 1);
+              const countW = Math.max(4, String(maxCount).length);
               const barMaxW = cw - labelW - countW - 3;
               if (barMaxW <= 0) return;
-              const maxCount = sorted.reduce((m, s) => Math.max(m, s.count), 1);
               const visible = Math.min(total - scroll, ch);
 
               for (let i = 0; i < visible; i++) {
