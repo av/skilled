@@ -200,11 +200,20 @@ function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: numbe
 
   let maxVal = 0;
   const grid: number[][] = [];
+  // Compute the start date as a local Date, then iterate by constructing
+  // each day as a local midnight.  This avoids the DST bug where adding
+  // a fixed 86400000 ms can land on the wrong local date during a
+  // spring-forward or fall-back transition.
+  const startDate = new Date(startMs);
+  const baseYear = startDate.getFullYear();
+  const baseMonth = startDate.getMonth();
+  const baseDay = startDate.getDate();
   for (let w = 0; w < HEATMAP_WEEKS; w++) {
     const col: number[] = [];
     for (let d = 0; d < 7; d++) {
-      const ms = startMs + (w * 7 + d) * 86400000;
-      const dateStr = localDateStr(new Date(ms));
+      const dayOffset = w * 7 + d;
+      const cellDate = new Date(baseYear, baseMonth, baseDay + dayOffset);
+      const dateStr = localDateStr(cellDate);
       const v = dayCounts.get(dateStr) ?? 0;
       if (v > maxVal) maxVal = v;
       col.push(v);
@@ -796,7 +805,7 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
                 }
                 const maxProj = d.projects[0]!.count;
                 const nameW = Math.min(16, Math.floor(iw * 0.35));
-                const cntW = 4;
+                const cntW = Math.max(4, String(maxProj).length);
                 const barMax = iw - nameW - cntW - 3;
                 const vis = Math.min(d.projects.length, ih);
                 for (let i = 0; i < vis; i++) {
