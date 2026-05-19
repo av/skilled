@@ -172,7 +172,11 @@ function pad(s: string, n: number): string {
 }
 
 function padLeft(s: string, n: number): string {
-  return s.length >= n ? s.slice(0, n) : " ".repeat(n - s.length) + s;
+  if (s.length <= n) return " ".repeat(n - s.length) + s;
+  // Overflow: show ">NNN" to indicate the value exceeds column width
+  // e.g. a 7-digit number in a 6-char column becomes ">99999"
+  if (n >= 4) return ">" + "9".repeat(n - 1);
+  return s.slice(s.length - n);
 }
 
 export function runCli(providers: Provider[], cli: CliResult): void {

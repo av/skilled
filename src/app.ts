@@ -689,15 +689,9 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
                 }
               }
 
-              if (this.height >= 12) {
-                const legendY = oy + 8;
-                buf.drawText("less", ox, legendY, colors.textDim, colors.bg);
-                for (let i = 0; i < 5; i++) {
-                  buf.setCell(ox + 5 + i * 2, legendY, "█", heatmapColors[i]!, colors.bg);
-                  buf.setCell(ox + 6 + i * 2, legendY, "█", heatmapColors[i]!, colors.bg);
-                }
-                buf.drawText("more", ox + 16, legendY, colors.textDim, colors.bg);
-              }
+              // Legend omitted: heatmap box is fixed at height 9 (7 rows for
+              // days of week + 2 for border), leaving no room for a legend row.
+              // If the heatmap box is ever made taller, a legend can be added here.
             },
           }),
 
