@@ -29,8 +29,12 @@ export function skillCounts(calls: SkillCall[]): SkillCount[] {
 export function dailyCounts(calls: SkillCall[]): DayCount[] {
   const counts = new Map<string, number>();
   for (const c of calls) {
-    const day = c.timestamp.toISOString().slice(0, 10);
-    counts.set(day, (counts.get(day) ?? 0) + 1);
+    const d = c.timestamp;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${day}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return [...counts.entries()]
     .map(([date, count]) => ({ date, count }))

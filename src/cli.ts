@@ -167,7 +167,8 @@ function sortSkills(skills: ReturnType<typeof skillCounts>, sort: CliResult["sor
 }
 
 function pad(s: string, n: number): string {
-  return s.length >= n ? s.slice(0, n) : s + " ".repeat(n - s.length);
+  if (s.length > n) return n > 1 ? s.slice(0, n - 1) + "…" : s.slice(0, n);
+  return s.length === n ? s : s + " ".repeat(n - s.length);
 }
 
 function padLeft(s: string, n: number): string {

@@ -174,14 +174,27 @@ function sortSkills(skills: SkillCount[], mode: SortMode, asc: boolean): SkillCo
   }
 }
 
+/** Format a Date as YYYY-MM-DD in local time. */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: number } {
   const now = new Date();
-  const todayDow = (now.getUTCDay() + 6) % 7;
-  const startMs = now.getTime() - ((HEATMAP_WEEKS - 1) * 7 + todayDow) * 86400000;
+  // Use local day-of-week (getDay) so the heatmap aligns with the user's
+  // local calendar, consistent with hourlyCounts which uses getHours().
+  const todayDow = (now.getDay() + 6) % 7; // Monday=0 … Sunday=6
+
+  // Build a midnight-aligned start date in local time
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startMs = today.getTime() - ((HEATMAP_WEEKS - 1) * 7 + todayDow) * 86400000;
 
   const dayCounts = new Map<string, number>();
   for (const c of calls) {
-    const d = c.timestamp.toISOString().slice(0, 10);
+    const d = localDateStr(c.timestamp);
     dayCounts.set(d, (dayCounts.get(d) ?? 0) + 1);
   }
 
@@ -191,7 +204,7 @@ function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: numbe
     const col: number[] = [];
     for (let d = 0; d < 7; d++) {
       const ms = startMs + (w * 7 + d) * 86400000;
-      const dateStr = new Date(ms).toISOString().slice(0, 10);
+      const dateStr = localDateStr(new Date(ms));
       const v = dayCounts.get(dateStr) ?? 0;
       if (v > maxVal) maxVal = v;
       col.push(v);
@@ -271,6 +284,12 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
     const purple = RGBA.fromHex("#D4EDE5");
     const pink = RGBA.fromHex("#A89866");
 
+    /** Pad or truncate (with ellipsis) a string to exactly `n` characters. */
+    function fit(s: string, n: number): string {
+      if (s.length > n) return n > 1 ? s.slice(0, n - 1) + "…" : s.slice(0, n);
+      return s.padEnd(n);
+    }
+
     function section(icon: string, title: string, count: number, color: RGBA, items: string[]) {
       lines.push({ text: `${icon} ${title} (${count})`, fg: color });
       lines.push({ text: "─".repeat(56), fg: colors.border });
@@ -285,30 +304,30 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
     section("★", "MOST USED — last 4 weeks", audit.mostUsed.length, purple,
       audit.mostUsed.map(h => {
         const pct = `${Math.round(h.share * 100)}%`.padStart(4);
-        return `${h.skill.skill.padEnd(22)} ${pct}   ${String(h.skill.count).padStart(4)} calls   ${h.skill.projects} proj`;
+        return `${fit(h.skill.skill, 22)} ${pct}   ${String(h.skill.count).padStart(4)} calls   ${h.skill.projects} proj`;
       }));
 
     section("▲", "RISING — 50%+ growth last 4w", audit.rising.length, success,
       audit.rising.map(r => {
-        return `${r.skill.skill.padEnd(22)} now: ${String(r.recentCount).padStart(3)}  was: ${String(r.priorCount).padStart(3)}   ↑${r.pct}%`;
+        return `${fit(r.skill.skill, 22)} now: ${String(r.recentCount).padStart(3)}  was: ${String(r.priorCount).padStart(3)}   ↑${r.pct}%`;
       }));
 
     section("▼", "DECLINING — 50%+ drop last 4w", audit.declining.length, danger,
       audit.declining.map(d => {
-        return `${d.skill.skill.padEnd(22)} now: ${String(d.recentCount).padStart(3)}  was: ${String(d.priorCount).padStart(3)}   ↓${d.pct}%`;
+        return `${fit(d.skill.skill, 22)} now: ${String(d.recentCount).padStart(3)}  was: ${String(d.priorCount).padStart(3)}   ↓${d.pct}%`;
       }));
 
     section("⚠", "STALE — unused 28+ days", audit.stale.length, warn,
-      audit.stale.map(s => `${s.skill.padEnd(22)} last: ${timeAgo(s.lastUsed)}   ${String(s.count).padStart(4)} calls`));
+      audit.stale.map(s => `${fit(s.skill, 22)} last: ${timeAgo(s.lastUsed)}   ${String(s.count).padStart(4)} calls`));
 
     section("◈", "CROSS-PROJECT — used in 3+ projects", audit.crossProject.length, info,
-      audit.crossProject.map(s => `${s.skill.padEnd(22)} ${s.projects} projects   ${String(s.count).padStart(4)} calls`));
+      audit.crossProject.map(s => `${fit(s.skill, 22)} ${s.projects} projects   ${String(s.count).padStart(4)} calls`));
 
     section("◇", "ONE-OFF — used once", audit.oneOff.length, info,
-      audit.oneOff.map(s => `${s.skill.padEnd(22)} ${timeAgo(s.lastUsed)} ago`));
+      audit.oneOff.map(s => `${fit(s.skill, 22)} ${timeAgo(s.lastUsed)} ago`));
 
     section("▪", "SINGLE-PROJECT — 1 project only", audit.singleProject.length, pink,
-      audit.singleProject.slice(0, 10).map(s => `${s.skill.padEnd(22)} ${String(s.count).padStart(4)} calls`));
+      audit.singleProject.slice(0, 10).map(s => `${fit(s.skill, 22)} ${String(s.count).padStart(4)} calls`));
 
     state.auditLines = lines;
   }
@@ -562,7 +581,7 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
                 const name = s.skill.length > labelW
                   ? s.skill.slice(0, labelW - 1) + "…"
                   : s.skill.padEnd(labelW);
-                const barW = Math.max(0, (s.count / maxCount) * barMaxW * progress);
+                const barW = Math.min(barMaxW, Math.max(0, (s.count / maxCount) * barMaxW * progress));
                 const colorIdx = (scroll + i) % barColors.length;
                 const color = barColors[colorIdx]!;
                 const hex = barPalette[colorIdx]!;
