@@ -277,8 +277,6 @@ function cmdList(providers: Provider[], cli: CliResult) {
   if (skills.length === 0) {
     if (cli.limit === 0) {
       console.log("Nothing to show (--limit 0).");
-    } else if (allSkills.length > 0) {
-      console.log("No skills match the given filters.");
     } else if (cli.source || cli.project) {
       console.log("No skills found matching the given filters.\nTry 'skilled providers' to see available data sources.");
     } else {
@@ -373,14 +371,19 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
       }
       return item;
     });
+    const catJson = (items: any[]) => {
+      const serialized = serialize(items);
+      if (limit < items.length) return { total: items.length, items: serialized };
+      return serialized;
+    };
     console.log(JSON.stringify({
-      mostUsed: serialize(audit.mostUsed),
-      rising: serialize(audit.rising),
-      declining: serialize(audit.declining),
-      crossProject: serialize(audit.crossProject),
-      singleProject: serialize(audit.singleProject),
-      stale: serialize(audit.stale),
-      oneOff: serialize(audit.oneOff),
+      mostUsed: catJson(audit.mostUsed),
+      rising: catJson(audit.rising),
+      declining: catJson(audit.declining),
+      crossProject: catJson(audit.crossProject),
+      singleProject: catJson(audit.singleProject),
+      stale: catJson(audit.stale),
+      oneOff: catJson(audit.oneOff),
     }, null, 2));
     return;
   }
@@ -394,13 +397,16 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
     return;
   }
 
-  const section = (title: string, items: { skill: string; detail: string }[]) => {
+  const section = (title: string, items: { skill: string; detail: string }[], total: number) => {
     if (items.length === 0) return;
     const nameW = Math.min(Math.max(...items.map(i => i.skill.length), 5), 35);
     console.log(`\n${title}`);
     console.log("─".repeat(title.length));
     for (const item of items) {
       console.log(`  ${pad(item.skill, nameW)} ${item.detail}`);
+    }
+    if (items.length < total) {
+      console.log(`  ... and ${total - items.length} more`);
     }
   };
 
@@ -414,37 +420,37 @@ function cmdAudit(providers: Provider[], cli: CliResult) {
   section("Most Used (last 4w)", audit.mostUsed.slice(0, limit).map(h => ({
     skill: h.skill.skill,
     detail: `${Math.round(h.share * 100)}%   ${h.skill.count} calls   ${h.skill.projects} proj`,
-  })));
+  })), audit.mostUsed.length);
 
   section("Rising (↑50%+ last 4w)", audit.rising.slice(0, limit).map(r => ({
     skill: r.skill.skill,
     detail: `${r.priorCount} → ${r.recentCount}   ↑${r.pct}%`,
-  })));
+  })), audit.rising.length);
 
   section("Declining (↓50%+ last 4w)", audit.declining.slice(0, limit).map(d => ({
     skill: d.skill.skill,
     detail: `${d.priorCount} → ${d.recentCount}   ↓${d.pct}%`,
-  })));
+  })), audit.declining.length);
 
   section("Cross-Project (3+)", audit.crossProject.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `${s.projects} projects, ${s.count} calls`,
-  })));
+  })), audit.crossProject.length);
 
   section("Single-Project", audit.singleProject.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `${s.count} calls`,
-  })));
+  })), audit.singleProject.length);
 
   section("Stale (28+ days)", audit.stale.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `last used ${timeAgo(s.lastUsed)} ago`,
-  })));
+  })), audit.stale.length);
 
   section("One-Off", audit.oneOff.slice(0, limit).map(s => ({
     skill: s.skill,
     detail: `used once, ${timeAgo(s.lastUsed)} ago`,
-  })));
+  })), audit.oneOff.length);
 
   console.log();
 }
