@@ -1077,6 +1077,10 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
         filterInsert("  ");
         return;
       }
+      if (key.name === "space") {
+        filterInsert(" ");
+        return;
+      }
       if (!key.ctrl && !key.meta && key.name && key.name.length === 1) {
         filterInsert(key.name);
         return;
