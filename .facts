@@ -28,12 +28,12 @@
 - data flow: Provider.collect() → aggregation (data.ts) → TUI (app.ts)
 
 # data
-- label: three core types: SkillCall, SkillCount, DayCount (defined in models.ts)
-  command: grep -q 'SkillCall' src/models.ts && grep -q 'SkillCount' src/models.ts && grep -q 'DayCount' src/models.ts
+- label: two core types: SkillCall, SkillCount (defined in models.ts)
+  command: grep -q 'SkillCall' src/models.ts && grep -q 'SkillCount' src/models.ts
 - label: SkillCall captures: skill, timestamp, project, sessionId, source
   command: grep -q 'sessionId' src/models.ts && grep -q 'source: string' src/models.ts
-- label: aggregation functions: skillCounts, dailyCounts, hourlyCounts (data.ts)
-  command: grep -q 'export function skillCounts' src/data.ts && grep -q 'export function dailyCounts' src/data.ts && grep -q 'export function hourlyCounts' src/data.ts
+- label: aggregation functions: skillCounts, hourlyCounts, skillDetail, auditSkills (data.ts)
+  command: grep -q 'export function skillCounts' src/data.ts && grep -q 'export function hourlyCounts' src/data.ts && grep -q 'export function skillDetail' src/data.ts
 
 # provider
 

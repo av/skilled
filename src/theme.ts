@@ -22,6 +22,6 @@ export const barPalette = [
 
 export const barColors = barPalette.map((h) => RGBA.fromHex(h));
 
-export const heatmapPalette = ["#161B22", "#103328", "#20614D", "#3D9478", "#50AE90"];
+const heatmapPalette = ["#161B22", "#103328", "#20614D", "#3D9478", "#50AE90"];
 export const heatmapColors = heatmapPalette.map((h) => RGBA.fromHex(h));
 

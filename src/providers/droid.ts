@@ -37,12 +37,12 @@ export class DroidProvider implements Provider {
       if (entry.isDirectory()) {
         this.walkSessions(fullPath, calls);
       } else if (entry.name.endsWith(".jsonl")) {
-        this.parseSession(fullPath, dir, calls);
+        this.parseSession(fullPath, calls);
       }
     }
   }
 
-  private parseSession(path: string, _parentDir: string, calls: SkillCall[]) {
+  private parseSession(path: string, calls: SkillCall[]) {
     let content: string;
     try {
       content = readFileSync(path, "utf-8");

@@ -1,4 +1,4 @@
-import type { SkillCall, SkillCount, DayCount } from "./models.js";
+import type { SkillCall, SkillCount } from "./models.js";
 
 export function skillCounts(calls: SkillCall[]): SkillCount[] {
   const counts = new Map<string, { count: number; projects: Set<string>; sessions: Set<string>; lastUsed: Date }>();
@@ -24,21 +24,6 @@ export function skillCounts(calls: SkillCall[]): SkillCount[] {
       lastUsed: e.lastUsed,
     }))
     .sort((a, b) => b.count - a.count);
-}
-
-export function dailyCounts(calls: SkillCall[]): DayCount[] {
-  const counts = new Map<string, number>();
-  for (const c of calls) {
-    const d = c.timestamp;
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const key = `${y}-${m}-${day}`;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([date, count]) => ({ date, count }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function hourlyCounts(calls: SkillCall[]): number[] {

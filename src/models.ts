@@ -13,8 +13,3 @@ export interface SkillCount {
   sessions: number;
   lastUsed: Date;
 }
-
-export interface DayCount {
-  date: string;
-  count: number;
-}

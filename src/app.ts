@@ -125,7 +125,7 @@ function exprColors(expr: string): RGBA[] {
     let end = pos;
     while (end < expr.length && expr[end] !== " ") end++;
     const token = expr.slice(pos, end);
-    const m = token.match(/^(source|src|s|project|proj|p):(.*)$/i);
+    const m = token.match(/^(source|src|s|project|proj|p):(.+)$/i);
     if (m) {
       const tagLen = m[1]!.length + 1;
       for (let i = pos; i < pos + tagLen; i++) result[i] = accent;
