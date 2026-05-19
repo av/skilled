@@ -8,17 +8,15 @@
   command: grep -q '"strict": true' tsconfig.json
 - label: ES module project (type: module)
   command: grep -q '"type": "module"' package.json
-- label: uses for TUI rendering
+- label: uses @opentui/core for TUI rendering
   command: grep -q '@opentui/core' package.json
-  tags: [opentui/core]
 - label: entry point is src/main.ts, exposed as 'skilled' bin command
   command: test -f src/main.ts && grep -q '"skilled"' package.json
 - label: no build step — runs directly via bun (noEmit: true in tsconfig)
   command: grep -q '"noEmit": true' tsconfig.json
 - no test suite
-- label: only runtime dependency is
+- label: only runtime dependency is @opentui/core
   command: jq -e '.dependencies | keys == ["@opentui/core"]' package.json >/dev/null
-  tags: [opentui/core]
 
 # architecture
 - label: provider pattern: providers implement Provider interface (name, available, collect)
@@ -53,9 +51,9 @@
   command: grep -q 'fbm' src/app.ts && grep -q 'PIXEL_FONT' src/app.ts
 - label: stats cards show: CALLS, SKILLS, PROJECTS, SOURCES
   command: grep -q 'CALLS' src/app.ts && grep -q 'SKILLS' src/app.ts && grep -q 'PROJECTS' src/app.ts && grep -q 'SOURCES' src/app.ts
-- left panel: skill frequency bar chart + weekly sparkline
-- label: right panel: 16-week activity heatmap + recent activity log
-  command: grep -q 'WEEKS.*=.*16' src/app.ts
+- left panel: skill frequency bar chart with animated staggered bars
+- label: right panel: 16-week activity heatmap, time-of-day histogram, recent activity log
+  command: grep -q 'WEEKS.*=.*16' src/app.ts && grep -q 'time of day' src/app.ts
 - label: staggered animations on bars, sparkline, and heatmap cells
   command: grep -q 'barStagger' src/app.ts && grep -q 'outBack' src/app.ts
 - label: Perlin noise implementation with fractional Brownian motion (fbm) in noise.ts
@@ -64,7 +62,7 @@
 ## interaction
 - label: three sort modes: by count, alphabetical, recent (cycled with 's')
   command: grep -q 'count.*alpha.*recent\|sortMode' src/app.ts
-- keyboard: q/esc quit, r refresh, s sort, j/k scroll, g/G top/bottom, ctrl+d/u page
+- keyboard: q quit, esc close/quit, s sort, tab direction, j/k scroll, g/G top/bottom, ctrl+d/u page, enter detail, a audit, / or f filter, r refresh
 
 ## theme
 - label: GitHub-inspired dark mode theme with 14-color bar palette and 5-level green heatmap

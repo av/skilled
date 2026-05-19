@@ -59,10 +59,12 @@ Add `--json` to any command for machine-readable output. Filter with `--source <
 | `s` | Cycle sort: count → alphabetical → recent |
 | `Tab` | Toggle sort direction |
 | `j` / `k` | Scroll |
-| `Enter` | Open skill detail (replaces right panel) |
+| `Enter` | Toggle skill detail (replaces right panel) |
+| `/` / `f` | Open filter bar (source, project, skill name) |
 | `a` | Toggle audit view |
 | `r` | Refresh data |
-| `q` / `Esc` | Quit |
+| `Esc` | Close detail/audit/filter, or quit |
+| `q` | Quit |
 
 ## Supported tools
 

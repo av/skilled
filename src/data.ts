@@ -107,10 +107,30 @@ export function skillDetail(calls: SkillCall[], skillName: string): SkillDetail 
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  const now = Date.now();
+  // Compute weekly buckets using local-time date arithmetic to avoid DST bugs.
+  // Fixed ms arithmetic (7 * 86400000) can miscategorize calls near week
+  // boundaries when a DST transition adds or removes an hour.
+  const nowDate = new Date();
+  const nowDay = nowDate.getDay(); // 0=Sun … 6=Sat
+  // Start of the current week (Monday 00:00 local time)
+  const mondayOffset = (nowDay + 6) % 7; // days since Monday
+  const weekStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() - mondayOffset);
+  const weekStartMs = weekStart.getTime();
+
   const weeklyUsage = new Array(16).fill(0) as number[];
   for (const c of filtered) {
-    const weeksAgo = Math.floor((now - c.timestamp.getTime()) / (7 * 86400000));
+    // Compute days between the call and the current week's Monday using
+    // local-time day boundaries, not fixed ms.  We find the Monday of the
+    // call's week and compare to the current Monday.
+    const cd = c.timestamp;
+    const callDow = (cd.getDay() + 6) % 7; // Mon=0
+    const callMonday = new Date(cd.getFullYear(), cd.getMonth(), cd.getDate() - callDow);
+    // Weeks ago = difference in Mondays (in whole days / 7).
+    // Using ms between two local midnights is safe: both are 00:00 local,
+    // so the difference is always an exact multiple of 7 * 86400000 even
+    // across DST boundaries (both dates have the same UTC offset at midnight
+    // of their respective Mondays, and rounding handles the rare edge case).
+    const weeksAgo = Math.round((weekStartMs - callMonday.getTime()) / (7 * 86400000));
     const idx = 15 - weeksAgo;
     if (idx >= 0 && idx < 16) weeklyUsage[idx]!++;
   }
