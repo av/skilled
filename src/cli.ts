@@ -235,8 +235,8 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
     return;
   }
 
-  console.log(`${pad("SOURCE", 20)} ${padLeft("CALLS", 6)} STATUS`);
-  console.log(`${"─".repeat(20)} ${"─".repeat(6)} ${"─".repeat(10)}`);
+  console.log(`${pad("SOURCE", 20)} ${padLeft("CALLS", 6)} ${pad("STATUS", 9)}`);
+  console.log(`${"─".repeat(20)} ${"─".repeat(6)} ${"─".repeat(9)}`);
   for (const r of rows) {
     console.log(`${pad(r.name, 20)} ${padLeft(String(r.calls), 6)} ${r.available ? "available" : "not found"}`);
   }
@@ -273,7 +273,7 @@ function cmdList(providers: Provider[], cli: CliResult) {
   const nameW = Math.min(maxName, 30);
 
   console.log(`${pad("SKILL", nameW)} ${padLeft("COUNT", 6)} ${padLeft("PROJ", 5)} ${padLeft("SESS", 5)} LAST USED`);
-  console.log(`${"─".repeat(nameW)} ${"─".repeat(6)} ${"─".repeat(5)} ${"─".repeat(5)} ${"─".repeat(10)}`);
+  console.log(`${"─".repeat(nameW)} ${"─".repeat(6)} ${"─".repeat(5)} ${"─".repeat(5)} ${"─".repeat(9)}`);
   for (const s of skills) {
     console.log(`${pad(s.skill, nameW)} ${padLeft(String(s.count), 6)} ${padLeft(String(s.projects), 5)} ${padLeft(String(s.sessions), 5)} ${timeAgo(s.lastUsed)}`);
   }
@@ -466,8 +466,8 @@ function cmdCalls(providers: Provider[], cli: CliResult) {
   const maxSkill = Math.min(Math.max(...calls.map(c => c.skill.length), 5), 25);
   const maxProj = Math.min(Math.max(...calls.map(c => projectShort(c.project).length), 7), 20);
 
-  console.log(`${pad("SKILL", maxSkill)} ${pad("PROJECT", maxProj)} ${pad("SOURCE", 14)} TIMESTAMP`);
-  console.log(`${"─".repeat(maxSkill)} ${"─".repeat(maxProj)} ${"─".repeat(14)} ${"─".repeat(20)}`);
+  console.log(`${pad("SKILL", maxSkill)} ${pad("PROJECT", maxProj)} ${pad("SOURCE", 14)} ${pad("TIMESTAMP", 19)}`);
+  console.log(`${"─".repeat(maxSkill)} ${"─".repeat(maxProj)} ${"─".repeat(14)} ${"─".repeat(19)}`);
   for (const c of calls) {
     console.log(`${pad(c.skill, maxSkill)} ${pad(projectShort(c.project), maxProj)} ${pad(c.source, 14)} ${c.timestamp.toISOString().slice(0, 19).replace("T", " ")}`);
   }
