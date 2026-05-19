@@ -250,6 +250,9 @@ function cmdProviders(providers: Provider[], cli: CliResult) {
   for (const r of rows) {
     console.log(`${pad(r.name, 20)} ${padLeft(String(r.calls), 6)} ${r.available ? "available" : "not found"}`);
   }
+  if (cli.limit !== undefined && rows.length < allRows.length) {
+    console.log(`\n${rows.length} of ${allRows.length} providers`);
+  }
 }
 
 function cmdList(providers: Provider[], cli: CliResult) {
@@ -314,12 +317,16 @@ function cmdDetail(providers: Provider[], cli: CliResult) {
 
   if (cli.json) {
     const limitedProjects = cli.limit !== undefined ? detail.projects.slice(0, cli.limit) : detail.projects;
-    console.log(JSON.stringify({
+    const json: Record<string, unknown> = {
       ...detail,
       projects: limitedProjects,
       firstUsed: detail.firstUsed.toISOString(),
       lastUsed: detail.lastUsed.toISOString(),
-    }, null, 2));
+    };
+    if (cli.limit !== undefined && limitedProjects.length < detail.projects.length) {
+      json.totalProjects = detail.projects.length;
+    }
+    console.log(JSON.stringify(json, null, 2));
     return;
   }
 

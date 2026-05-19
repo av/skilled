@@ -188,9 +188,14 @@ function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: numbe
   // local calendar, consistent with hourlyCounts which uses getHours().
   const todayDow = (now.getDay() + 6) % 7; // Monday=0 … Sunday=6
 
-  // Build a midnight-aligned start date in local time
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startMs = today.getTime() - ((HEATMAP_WEEKS - 1) * 7 + todayDow) * 86400000;
+  // Compute the start date using local-time date arithmetic to avoid DST bugs.
+  // Subtracting fixed milliseconds from local midnight can land on the wrong
+  // date when crossing a CET/CEST (or similar) boundary.
+  const daysBack = (HEATMAP_WEEKS - 1) * 7 + todayDow;
+  const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysBack);
+  const baseYear = startDate.getFullYear();
+  const baseMonth = startDate.getMonth();
+  const baseDay = startDate.getDate();
 
   const dayCounts = new Map<string, number>();
   for (const c of calls) {
@@ -200,14 +205,7 @@ function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: numbe
 
   let maxVal = 0;
   const grid: number[][] = [];
-  // Compute the start date as a local Date, then iterate by constructing
-  // each day as a local midnight.  This avoids the DST bug where adding
-  // a fixed 86400000 ms can land on the wrong local date during a
-  // spring-forward or fall-back transition.
-  const startDate = new Date(startMs);
-  const baseYear = startDate.getFullYear();
-  const baseMonth = startDate.getMonth();
-  const baseDay = startDate.getDate();
+  // Iterate by constructing each day as a local midnight to avoid DST issues.
   for (let w = 0; w < HEATMAP_WEEKS; w++) {
     const col: number[] = [];
     for (let d = 0; d < 7; d++) {
