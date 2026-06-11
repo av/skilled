@@ -93,6 +93,7 @@ fn main() {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct JsonOutput<'a> {
     calls: usize,
     providers: Vec<JsonProvider<'a>>,
