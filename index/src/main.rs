@@ -21,7 +21,7 @@ fn main() {
                 return;
             }
             "-v" | "--version" => {
-                println!("0.3.2");
+                println!("0.3.3");
                 return;
             }
             "-q" | "--quiet" => quiet = true,
@@ -81,7 +81,9 @@ fn main() {
             } else if !quiet {
                 eprintln!(
                     "wrote {} calls to {} in {}ms",
-                    stats.total_calls, db_file.display(), stats.elapsed_ms
+                    stats.total_calls,
+                    db_file.display(),
+                    stats.elapsed_ms
                 );
             }
         }
