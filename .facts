@@ -14,7 +14,8 @@
   command: test -f src/main.ts && grep -q '"skilled"' package.json
 - label: no build step — runs directly via bun (noEmit: true in tsconfig)
   command: grep -q '"noEmit": true' tsconfig.json
-- no test suite
+- label: unit tests cover the Grok provider
+  command: bun test src/providers/grok.test.ts
 - label: only runtime dependency is @opentui/core
   command: jq -e '.dependencies | keys == ["@opentui/core"]' package.json >/dev/null
 
@@ -44,6 +45,26 @@
   command: grep -q 'BUILTINS' src/providers/claude-code.ts
 - label: malformed JSON lines in history are silently skipped
   command: grep -q 'catch' src/providers/claude-code.ts
+
+## grok
+- label: Grok counts a read_file of a path matching skills/<name>/SKILL.md as a skill invocation
+  command: bun test src/providers/grok.test.ts -t 'counts a read_file of skills'
+  tags: [grok, implemented]
+- label: Grok skill name for a SKILL.md load is the directory containing the file
+  command: bun test src/providers/grok.test.ts -t 'directory containing the file'
+  tags: [grok, implemented]
+- label: Grok ignores tool_call_update events when counting SKILL.md loads so they do not duplicate tool_call
+  command: bun test src/providers/grok.test.ts -t 'ignores tool_call_update'
+  tags: [grok, implemented]
+- label: Grok counts a SKILL.md load at most once per session even if the file is re-read or loaded from both project and global copies
+  command: bun test src/providers/grok.test.ts -t 'at most once per session'
+  tags: [grok, implemented]
+- label: Grok still counts slash-command invocations from <command-name> tags in user messages
+  command: bun test src/providers/grok.test.ts -t 'slash-command invocations'
+  tags: [grok, implemented]
+- label: Grok builtin slash commands are not counted as skills when loaded via SKILL.md
+  command: bun test src/providers/grok.test.ts -t 'builtin slash commands loaded via SKILL.md'
+  tags: [grok, implemented]
 
 # ui
 - full-screen TUI: header, stats row, left/right panels, footer
