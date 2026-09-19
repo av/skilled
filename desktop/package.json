@@ -1,0 +1,31 @@
+{
+  "name": "skilled-desktop",
+  "productName": "Skilled",
+  "version": "0.3.3",
+  "description": "Desktop app for Skilled: local skill usage insights for AI coding tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:ui": "bun run scripts/build.ts",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests/unit",
+    "test:e2e": "bun test tests/e2e --timeout 120000"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/bun": "latest",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

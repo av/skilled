@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Skilled",
+  "version": "0.3.3",
+  "identifier": "dev.av.skilled",
+  "build": {
+    "beforeDevCommand": "bun run scripts/build.ts --watch",
+    "beforeBuildCommand": "bun run scripts/build.ts",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Skilled",
+        "width": 1240,
+        "height": 840,
+        "minWidth": 860,
+        "minHeight": 600,
+        "center": true,
+        "visible": true,
+        "theme": null
+      }
+    ],
+    "security": {
+      "csp": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; ipc-src ipc: http://ipc.localhost",
+      "dangerousDisableAssetCspModification": false
+    },
+    "withGlobalTauri": false
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "DeveloperTool",
+    "shortDescription": "Skill usage insights for AI coding tools",
+    "longDescription": "Skilled reads the local histories of Claude Code, OpenCode, Codex, Grok and Droid and shows which skills you actually use. Local files only: no accounts, no network, no telemetry.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico", "icons/icon.png"],
+    "linux": { "deb": { "depends": [] }, "appimage": { "bundleMediaFramework": false } },
+    "macOS": { "minimumSystemVersion": "10.15" },
+    "windows": { "nsis": { "installMode": "currentUser" } }
+  },
+  "plugins": {}
+}
