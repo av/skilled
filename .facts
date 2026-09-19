@@ -98,3 +98,129 @@
 - skill detail panel shows per-project usage breakdown, session count, first/last used dates, and weekly usage sparkline @implemented
 - 'a' key toggles audit view replacing main layout with library health insights @implemented
 - audit view shows: stale skills (unused 28+ days), one-off skills (used once), declining skills (usage dropped 50%+ over last 4 weeks vs prior 4) @implemented
+
+# desktop
+
+## data
+- label: Desktop shell is Tauri v2; the index crate is linked in-process as a library (no bundled Bun runtime, no second parser)
+  id: desktop-tauri
+  command: grep -q '^\[lib\]' index/Cargo.toml && grep -q 'skilled-index' desktop/src-tauri/Cargo.toml && grep -q '"tauri"' desktop/src-tauri/Cargo.toml && ! grep -rq 'bun build --compile' desktop/package.json desktop/scripts
+  tags: [desktop, spec]
+- label: Desktop indexes through skilled_index::providers::all_providers and writes the same ~/.skilled/index.db the TUI reads (custom --db path supported via settings)
+  id: desktop-index-path
+  command: grep -q 'all_providers' desktop/src-tauri/src/*.rs && grep -q 'write_index' desktop/src-tauri/src/*.rs && grep -q 'index.db' desktop/src-tauri/src/*.rs
+  tags: [desktop, spec]
+- label: Desktop reuses a fresh index (same 60s staleness rule as ensureIndex) instead of re-parsing on every launch
+  id: desktop-index-fresh
+  command: cargo test --manifest-path index/Cargo.toml --quiet read_index 2>&1 | grep -q 'test result: ok'
+  tags: [desktop, spec]
+- label: Desktop falls back to the TypeScript providers by running the installed skilled CLI with --no-index --json when the Rust index is disabled or fails, and reports which reader is active
+  id: desktop-fallback
+  command: grep -q -- '--no-index' desktop/src-tauri/src/*.rs && grep -q 'reader' desktop/ui/*.tsx
+  tags: [desktop, spec]
+- label: Rust index records the source file of each call (file column) so the desktop can reveal the session that produced it; TUI index reader is unaffected
+  id: desktop-call-file
+  command: grep -q 'pub file' index/src/model.rs && grep -q 'file TEXT' index/src/db.rs && bun test src/providers/grok.test.ts >/dev/null 2>&1
+  tags: [desktop, spec]
+- label: Rust providers accept per-provider path overrides and default to the current auto-detected locations
+  id: desktop-path-overrides
+  command: grep -q 'ProviderPaths' index/src/providers/mod.rs && cargo test --manifest-path index/Cargo.toml --quiet 2>&1 | grep -q 'test result: ok'
+  tags: [desktop, spec]
+- label: Desktop makes no network requests: CSP connect-src is none and the app has no http plugin or remote URLs
+  id: desktop-offline
+  command: grep -q "connect-src 'none'" desktop/src-tauri/tauri.conf.json && ! grep -q 'tauri-plugin-http' desktop/src-tauri/Cargo.toml
+  tags: [desktop, spec]
+
+## parity
+- label: TUI filter syntax, sort modes, sort-direction defaults and 16-week heatmap grid live in src/view.ts and are shared by the TUI and the desktop
+  id: desktop-shared-view
+  command: grep -q 'from "./view.js"' src/app.ts && grep -rq 'src/view' desktop/ui && bun test src/view.test.ts >/dev/null 2>&1
+  tags: [desktop, spec]
+- label: Desktop dashboard shows CALLS, SKILLS, PROJECTS, SOURCES stat cards, ranked skill bars, 16-week heatmap, hourly histogram and recent activity feed
+  id: desktop-dashboard
+  command: grep -q 'Heatmap' desktop/ui/views/Dashboard.tsx && grep -q 'Hourly' desktop/ui/views/Dashboard.tsx && grep -q 'Recent' desktop/ui/views/Dashboard.tsx
+  tags: [desktop, spec]
+- label: Desktop ranking supports count, alphabetical and recent sorts with a direction toggle (s and Tab keys, same as the TUI)
+  id: desktop-sorts
+  command: cd desktop && bun test tests/unit -t 'sort' 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+- label: Desktop filter bar accepts the TUI expression syntax (source:/s:, project:/p:, free text = skill name) and also offers source and project pickers
+  id: desktop-filter
+  command: cd desktop && bun test tests/unit -t 'filter' 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+- label: Desktop skill detail shows per-project breakdown, session count, first/last used and the 16-week weekly sparkline from skillDetail()
+  id: desktop-detail
+  command: grep -q 'skillDetail' desktop/ui/views/Detail.tsx && grep -q 'weeklyUsage' desktop/ui/views/Detail.tsx
+  tags: [desktop, spec]
+- label: Desktop audit view renders all seven auditSkills() sections (most used, rising, declining, stale, cross-project, one-off, single-project)
+  id: desktop-audit
+  command: for k in mostUsed rising declining stale crossProject oneOff singleProject; do grep -q "$k" desktop/ui/views/Audit.tsx || exit 1; done
+  tags: [desktop, spec]
+- label: Desktop activity view lists raw calls (skilled calls parity) with skill, time, project, session and source columns
+  id: desktop-activity
+  command: grep -q 'sessionId' desktop/ui/views/Activity.tsx
+  tags: [desktop, spec]
+- label: Desktop refreshes without restart: provider directories are watched with notify and a configurable interval refresh runs in the UI
+  id: desktop-live
+  command: grep -q 'notify' desktop/src-tauri/Cargo.toml && grep -q 'refreshInterval' desktop/ui/*.tsx desktop/ui/*.ts
+  tags: [desktop, spec]
+- label: Aggregating a 50k-call history (counts, hourly, heatmap, audit) completes under 500ms so the UI does not freeze
+  id: desktop-perf
+  command: cd desktop && bun test tests/unit -t '50k' 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+
+## native
+- label: Desktop restores window position and size across launches via tauri-plugin-window-state
+  id: desktop-window-state
+  command: grep -q 'tauri-plugin-window-state' desktop/src-tauri/Cargo.toml
+  tags: [desktop, spec]
+- label: Desktop has a system tray whose tooltip and menu show live call/skill counts with Show, Refresh and Quit actions
+  id: desktop-tray
+  command: grep -q 'TrayIconBuilder' desktop/src-tauri/src/*.rs && grep -q 'set_tooltip' desktop/src-tauri/src/*.rs
+  tags: [desktop, spec]
+- label: Desktop keyboard shortcuts mirror the TUI (s, Tab, j/k, g/G, ctrl-d/u, Enter, a, / or f, r, Esc, q) plus Ctrl/Cmd+1-5 for views
+  id: desktop-keys
+  command: cd desktop && bun test tests/unit -t 'keymap' 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+- label: Desktop follows the OS light/dark appearance by default with a manual override in settings
+  id: desktop-theme
+  command: grep -q 'prefers-color-scheme' desktop/ui/app.css && grep -q 'theme' desktop/ui/views/Settings.tsx
+  tags: [desktop, spec]
+- label: A call can be opened in the default app or revealed in the file manager via tauri-plugin-opener
+  id: desktop-open-source
+  command: grep -q 'tauri-plugin-opener' desktop/src-tauri/Cargo.toml && grep -q 'revealItemInDir' desktop/ui/*.ts desktop/ui/*.tsx desktop/ui/views/*.tsx
+  tags: [desktop, spec]
+- label: Every view (skills, calls, detail, audit, providers) can be exported as JSON or CSV through a native save dialog
+  id: desktop-export
+  command: cd desktop && bun test tests/unit -t 'csv' 2>&1 | grep -q ' 0 fail' && grep -q 'tauri-plugin-dialog' src-tauri/Cargo.toml
+  tags: [desktop, spec]
+- label: Providers view shows detection status, paths read, call count, last indexed time and which reader (Rust index or TS fallback) is active
+  id: desktop-providers-view
+  command: grep -q 'indexedAt' desktop/ui/views/Providers.tsx && grep -q 'paths' desktop/ui/views/Providers.tsx
+  tags: [desktop, spec]
+- label: Settings view offers per-provider path overrides, refresh interval, noise filters (skill/project patterns to hide), index DB path, reader mode, theme and tray behavior, persisted in the app config dir
+  id: desktop-settings
+  command: grep -q 'noise' desktop/ui/views/Settings.tsx && grep -q 'refreshInterval' desktop/ui/views/Settings.tsx && grep -q 'app_config_dir' desktop/src-tauri/src/*.rs
+  tags: [desktop, spec]
+
+## quality
+- label: Desktop unit tests cover the data adapter and view models
+  id: desktop-unit
+  command: cd desktop && bun test tests/unit 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+- label: An end-to-end test launches the built app against a fixture history and asserts the dashboard renders fixture skills
+  id: desktop-e2e
+  command: test -f desktop/tests/e2e/dashboard.spec.ts && test -d desktop/tests/fixtures/home
+  tags: [desktop, spec]
+- label: CI builds the desktop app on Linux, macOS and Windows
+  id: desktop-ci
+  command: grep -q 'ubuntu' .github/workflows/desktop.yml && grep -q 'macos' .github/workflows/desktop.yml && grep -q 'windows' .github/workflows/desktop.yml
+  tags: [desktop, spec]
+- label: README has a Desktop section with install, dev run, build and an architecture diagram; screenshots of every view live in desktop/docs
+  id: desktop-docs
+  command: grep -q '## Desktop' README.md && ls desktop/docs/*.png >/dev/null 2>&1
+  tags: [desktop, spec]
+
+# domain
+- A SkillCall is one observed invocation of a named skill in a provider session and project
+- A SkillCount aggregates SkillCalls by skill and records frequency, distinct projects, sessions, and last use
