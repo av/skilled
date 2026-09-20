@@ -62,6 +62,9 @@ export function App() {
         setView,
         openDetail: () => setDetailSkill(e2eRef.current.skills[0] ?? null),
         closeDetail: () => setDetailSkill(null),
+        setFilter: setFilterExpr,
+        cycleSort: () => setSortMode(m => { const n = nextSortMode(m); setSortAsc(SORT_DEFAULT_ASC[n]); return n; }),
+        toggleSortDir: () => setSortAsc(a => !a),
         ready: () => { const s = e2eRef.current.snapshot; return s ? { calls: s.calls.length, skills: e2eRef.current.skills, reader: s.reader } : null; },
       });
     })();

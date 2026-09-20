@@ -28,9 +28,23 @@ pub struct ViewReport {
     pub text_length: usize,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Config {
+    pub enabled: bool,
+    /// ms to dwell on each view before capturing (SKILLED_E2E_DWELL_MS, default 900).
+    pub dwell_ms: u64,
+    /// SKILLED_E2E_RECORD=1 adds an interactive tour for screen recordings.
+    pub record: bool,
+}
+
 #[tauri::command]
-pub fn e2e_enabled() -> bool {
-    dir().is_some()
+pub fn e2e_config() -> Config {
+    Config {
+        enabled: dir().is_some(),
+        dwell_ms: std::env::var("SKILLED_E2E_DWELL_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(900),
+        record: std::env::var("SKILLED_E2E_RECORD").map(|v| v == "1").unwrap_or(false),
+    }
 }
 
 /// Snapshot the visible webview to `<dir>/<name>.png`. Returns false when the
@@ -75,15 +89,53 @@ async fn snapshot(_app: &AppHandle, _path: PathBuf) -> Result<bool, String> {
     Ok(false)
 }
 
+/// Start/stop a frame grabber for recordings (Linux only; no-op elsewhere).
+/// Frames land in `<dir>/frames/00001.png …` at roughly `fps`.
+#[tauri::command]
+pub async fn e2e_record(app: AppHandle, start: bool, fps: u32) -> Result<bool, String> {
+    let dir = dir().ok_or("not in e2e mode")?;
+    if !start {
+        RECORDING.store(false, std::sync::atomic::Ordering::SeqCst);
+        return Ok(true);
+    }
+    if !cfg!(target_os = "linux") {
+        return Ok(false);
+    }
+    let frames = dir.join("frames");
+    fs::create_dir_all(&frames).map_err(|e| e.to_string())?;
+    RECORDING.store(true, std::sync::atomic::Ordering::SeqCst);
+    let interval = std::time::Duration::from_millis(1000 / fps.clamp(1, 30) as u64);
+    tauri::async_runtime::spawn(async move {
+        let mut n = 0u32;
+        while RECORDING.load(std::sync::atomic::Ordering::SeqCst) {
+            n += 1;
+            let _ = snapshot(&app, frames.join(format!("{n:05}.png"))).await;
+            tokio_sleep(interval).await;
+        }
+    });
+    Ok(true)
+}
+
+static RECORDING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+async fn tokio_sleep(d: std::time::Duration) {
+    // tauri's async runtime is tokio; avoid adding tokio as a direct dependency.
+    let (tx, rx) = tauri::async_runtime::channel::<()>(1);
+    std::thread::spawn(move || { std::thread::sleep(d); let _ = tx.blocking_send(()); });
+    let mut rx = rx;
+    let _ = rx.recv().await;
+}
+
 /// Receives the renderer's report and exits the app.
 #[tauri::command]
 pub fn e2e_report(app: AppHandle, report: Report) -> Result<(), String> {
     let dir = dir().ok_or("not in e2e mode")?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     fs::write(dir.join("report.json"), serde_json::to_string_pretty(&report).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    RECORDING.store(false, std::sync::atomic::Ordering::SeqCst);
     let handle = app.clone();
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(300));
+        std::thread::sleep(std::time::Duration::from_millis(400));
         handle.exit(0);
     });
     Ok(())

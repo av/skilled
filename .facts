@@ -74,7 +74,7 @@
   command: grep -q 'CALLS' src/app.ts && grep -q 'SKILLS' src/app.ts && grep -q 'PROJECTS' src/app.ts && grep -q 'SOURCES' src/app.ts
 - left panel: skill frequency bar chart with animated staggered bars
 - label: right panel: 16-week activity heatmap, time-of-day histogram, recent activity log
-  command: grep -q 'WEEKS.*=.*16' src/app.ts && grep -q 'time of day' src/app.ts
+  command: grep -q 'HEATMAP_WEEKS = 16' src/view.ts && grep -q 'time of day' src/app.ts
 - label: staggered animations on bars, sparkline, and heatmap cells
   command: grep -q 'barStagger' src/app.ts && grep -q 'outBack' src/app.ts
 - label: Perlin noise implementation with fractional Brownian motion (fbm) in noise.ts
@@ -104,7 +104,7 @@
 ## data
 - label: Desktop shell is Tauri v2; the index crate is linked in-process as a library (no bundled Bun runtime, no second parser)
   id: desktop-tauri
-  command: grep -q '^\[lib\]' index/Cargo.toml && grep -q 'skilled-index' desktop/src-tauri/Cargo.toml && grep -q '"tauri"' desktop/src-tauri/Cargo.toml && ! grep -rq 'bun build --compile' desktop/package.json desktop/scripts
+  command: grep -q '^\[lib\]' index/Cargo.toml && grep -q 'skilled-index' desktop/src-tauri/Cargo.toml && grep -q '^tauri = ' desktop/src-tauri/Cargo.toml && ! grep -rq 'bun build --compile' desktop/package.json desktop/scripts
   tags: [desktop, spec]
 - label: Desktop indexes through skilled_index::providers::all_providers and writes the same ~/.skilled/index.db the TUI reads (custom --db path supported via settings)
   id: desktop-index-path
@@ -150,7 +150,7 @@
   tags: [desktop, spec]
 - label: Desktop skill detail shows per-project breakdown, session count, first/last used and the 16-week weekly sparkline from skillDetail()
   id: desktop-detail
-  command: grep -q 'skillDetail' desktop/ui/views/Detail.tsx && grep -q 'weeklyUsage' desktop/ui/views/Detail.tsx
+  command: grep -q 'skillDetail(' desktop/ui/App.tsx && grep -q 'weeklyUsage' desktop/ui/views/Detail.tsx
   tags: [desktop, spec]
 - label: Desktop audit view renders all seven auditSkills() sections (most used, rising, declining, stale, cross-project, one-off, single-project)
   id: desktop-audit
@@ -188,7 +188,7 @@
   tags: [desktop, spec]
 - label: A call can be opened in the default app or revealed in the file manager via tauri-plugin-opener
   id: desktop-open-source
-  command: grep -q 'tauri-plugin-opener' desktop/src-tauri/Cargo.toml && grep -q 'revealItemInDir' desktop/ui/*.ts desktop/ui/*.tsx desktop/ui/views/*.tsx
+  command: grep -q 'tauri-plugin-opener' desktop/src-tauri/Cargo.toml && grep -rq 'revealItemInDir' desktop/ui
   tags: [desktop, spec]
 - label: Every view (skills, calls, detail, audit, providers) can be exported as JSON or CSV through a native save dialog
   id: desktop-export
@@ -210,7 +210,7 @@
   tags: [desktop, spec]
 - label: An end-to-end test launches the built app against a fixture history and asserts the dashboard renders fixture skills
   id: desktop-e2e
-  command: test -f desktop/tests/e2e/dashboard.spec.ts && test -d desktop/tests/fixtures/home
+  command: test -f desktop/tests/e2e/dashboard.spec.ts && test -d desktop/tests/fixtures/home && grep -q 'report.json' desktop/tests/e2e/dashboard.spec.ts
   tags: [desktop, spec]
 - label: CI builds the desktop app on Linux, macOS and Windows
   id: desktop-ci

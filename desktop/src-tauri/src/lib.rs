@@ -253,7 +253,7 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![snapshot, get_settings, save_settings, app_info, write_export, path_exists, quit, e2e::e2e_enabled, e2e::e2e_shot, e2e::e2e_report])
+        .invoke_handler(tauri::generate_handler![snapshot, get_settings, save_settings, app_info, write_export, path_exists, quit, e2e::e2e_config, e2e::e2e_shot, e2e::e2e_record, e2e::e2e_report])
         .run(tauri::generate_context!())
         .expect("error while running Skilled");
 }

@@ -3,3 +3,5 @@ dist/
 src-tauri/target/
 src-tauri/gen/
 tests/e2e/.tmp/
+tests/fixtures/home-now/
+tests/fixtures/**/.local/share/gvfs-metadata/
