@@ -1,8 +1,5 @@
-mod db;
-mod model;
-mod providers;
-
 use serde::Serialize;
+use skilled_index::{db, providers};
 use std::env;
 use std::path::PathBuf;
 
@@ -21,7 +18,7 @@ fn main() {
                 return;
             }
             "-v" | "--version" => {
-                println!("0.3.3");
+                println!("{}", skilled_index::VERSION);
                 return;
             }
             "-q" | "--quiet" => quiet = true,
@@ -49,9 +46,7 @@ fn main() {
         i += 1;
     }
 
-    let home = env::var("HOME")
-        .or_else(|_| env::var("USERPROFILE"))
-        .unwrap_or_else(|_| "/tmp".into());
+    let home = skilled_index::home_dir();
 
     let db_file = match db_path {
         Some(p) => PathBuf::from(p),

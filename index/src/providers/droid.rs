@@ -8,9 +8,16 @@ use crate::model::{ProviderResult, SkillCall};
 
 const SOURCE: &str = "Droid CLI";
 
+pub fn default_root(home: &str) -> String {
+    format!("{home}/.factory/sessions")
+}
+
 pub fn collect(home: &str) -> ProviderResult {
-    let sessions_dir = format!("{home}/.factory/sessions");
-    let available = Path::new(&sessions_dir).is_dir();
+    collect_at(&default_root(home))
+}
+
+pub fn collect_at(sessions_dir: &str) -> ProviderResult {
+    let available = Path::new(sessions_dir).is_dir();
 
     if !available {
         return ProviderResult {
@@ -23,7 +30,7 @@ pub fn collect(home: &str) -> ProviderResult {
     let active_re = Regex::new(r#"Skill "([^"]+)" is now active"#).unwrap();
     let mut calls = Vec::new();
 
-    for entry in WalkDir::new(&sessions_dir)
+    for entry in WalkDir::new(sessions_dir)
         .into_iter()
         .filter_map(|e| e.ok())
     {
@@ -103,6 +110,7 @@ fn parse_session(path: &Path, active_re: &Regex, calls: &mut Vec<SkillCall>) {
                 project: project.clone(),
                 session_id: session_id.clone(),
                 source: SOURCE.into(),
+                file: path.display().to_string(),
             });
         }
     }

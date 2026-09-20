@@ -15,11 +15,17 @@ const BUILTINS: &[&str] = &[
     "skill-installer",
 ];
 
+pub fn default_root(home: &str) -> String {
+    let codex_home = std::env::var("CODEX_HOME").unwrap_or_else(|_| format!("{home}/.codex"));
+    format!("{codex_home}/sessions")
+}
+
 pub fn collect(home: &str) -> ProviderResult {
-    let codex_home = std::env::var("CODEX_HOME")
-        .unwrap_or_else(|_| format!("{home}/.codex"));
-    let sessions_dir = format!("{codex_home}/sessions");
-    let available = Path::new(&sessions_dir).is_dir();
+    collect_at(&default_root(home))
+}
+
+pub fn collect_at(sessions_dir: &str) -> ProviderResult {
+    let available = Path::new(sessions_dir).is_dir();
 
     if !available {
         return ProviderResult {
@@ -33,7 +39,7 @@ pub fn collect(home: &str) -> ProviderResult {
     let name_re = Regex::new(r"<name>([^<]+)</name>").unwrap();
     let mut calls = Vec::new();
 
-    for entry in WalkDir::new(&sessions_dir)
+    for entry in WalkDir::new(sessions_dir)
         .into_iter()
         .filter_map(|e| e.ok())
     {
@@ -113,6 +119,7 @@ fn parse_session(
                             project: project.clone(),
                             session_id: session_id.clone(),
                             source: SOURCE.into(),
+                            file: path.display().to_string(),
                         });
                     }
                 }

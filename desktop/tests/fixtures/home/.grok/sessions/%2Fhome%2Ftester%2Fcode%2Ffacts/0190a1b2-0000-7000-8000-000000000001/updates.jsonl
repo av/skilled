@@ -1,0 +1,2 @@
+{"timestamp":1777809600,"params":{"sessionId":"grok-s1","update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"<command-name>facts</command-name>"}}}}
+{"timestamp":1777813200,"params":{"sessionId":"grok-s1","update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"<command-name>brainstorm</command-name>"}}}}

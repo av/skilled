@@ -12,10 +12,10 @@ import { skillCounts, hourlyCounts, projectShort, timeAgo, skillDetail, auditSki
 import type { SkillDetail, SkillAudit } from "./data.js";
 import { colors, barColors, barPalette, heatmapColors } from "./theme.js";
 import { fbm } from "./noise.js";
+import { HEATMAP_WEEKS, SORT_LABELS, SORT_DEFAULT_ASC, nextSortMode, sortSkills, parseFilterExpr, buildHeatmapGrid, type SortMode } from "./view.js";
 
 const BLOCKS = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
 const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const HEATMAP_WEEKS = 16;
 
 const NOISE_CHARS = [" ", "░", "▒", "▓", "█"];
 const NOISE_COLORS = [
@@ -76,44 +76,6 @@ const PIXEL_FONT: Record<string, number[][]> = {
   ],
 };
 
-type SortMode = "count" | "alpha" | "recent";
-const SORT_LABELS: Record<SortMode, string> = {
-  count: "by count",
-  alpha: "a-z",
-  recent: "by recent",
-};
-const SORT_CYCLE: SortMode[] = ["count", "alpha", "recent"];
-const SORT_DEFAULT_ASC: Record<SortMode, boolean> = {
-  count: false,
-  alpha: true,
-  recent: false,
-};
-
-interface FilterCriteria {
-  sources: string[];
-  projects: string[];
-  skills: string[];
-}
-
-function parseFilterExpr(expr: string): FilterCriteria {
-  const sources: string[] = [];
-  const projects: string[] = [];
-  const skills: string[] = [];
-  for (const token of expr.trim().split(/\s+/)) {
-    if (!token) continue;
-    const m = token.match(/^(source|src|s|project|proj|p):(.+)$/i);
-    if (m) {
-      const tag = m[1]!.toLowerCase();
-      const val = m[2]!.toLowerCase();
-      if (tag === "s" || tag === "src" || tag === "source") sources.push(val);
-      else projects.push(val);
-    } else {
-      skills.push(token.toLowerCase());
-    }
-  }
-  return { sources, projects, skills };
-}
-
 function exprColors(expr: string): RGBA[] {
   const result = new Array<RGBA>(expr.length).fill(RGBA.fromHex("#3D5C52"));
   let pos = 0;
@@ -160,65 +122,6 @@ function drawBar(buf: OptimizedBuffer, x: number, y: number, width: number, fg: 
   const frac = Math.round((width - full) * 8);
   for (let i = 0; i < full; i++) buf.setCell(x + i, y, "█", fg, bg);
   if (frac > 0) buf.setCell(x + full, y, BLOCKS[frac]!, fg, bg);
-}
-
-function sortSkills(skills: SkillCount[], mode: SortMode, asc: boolean): SkillCount[] {
-  const copy = [...skills];
-  switch (mode) {
-    case "count":
-      return copy.sort((a, b) => asc ? a.count - b.count : b.count - a.count);
-    case "alpha":
-      return copy.sort((a, b) => asc ? a.skill.localeCompare(b.skill) : b.skill.localeCompare(a.skill));
-    case "recent":
-      return copy.sort((a, b) => asc ? a.lastUsed.getTime() - b.lastUsed.getTime() : b.lastUsed.getTime() - a.lastUsed.getTime());
-  }
-}
-
-/** Format a Date as YYYY-MM-DD in local time. */
-function localDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function buildHeatmapGrid(calls: SkillCall[]): { grid: number[][]; maxVal: number } {
-  const now = new Date();
-  // Use local day-of-week (getDay) so the heatmap aligns with the user's
-  // local calendar, consistent with hourlyCounts which uses getHours().
-  const todayDow = (now.getDay() + 6) % 7; // Monday=0 … Sunday=6
-
-  // Compute the start date using local-time date arithmetic to avoid DST bugs.
-  // Subtracting fixed milliseconds from local midnight can land on the wrong
-  // date when crossing a CET/CEST (or similar) boundary.
-  const daysBack = (HEATMAP_WEEKS - 1) * 7 + todayDow;
-  const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysBack);
-  const baseYear = startDate.getFullYear();
-  const baseMonth = startDate.getMonth();
-  const baseDay = startDate.getDate();
-
-  const dayCounts = new Map<string, number>();
-  for (const c of calls) {
-    const d = localDateStr(c.timestamp);
-    dayCounts.set(d, (dayCounts.get(d) ?? 0) + 1);
-  }
-
-  let maxVal = 0;
-  const grid: number[][] = [];
-  // Iterate by constructing each day as a local midnight to avoid DST issues.
-  for (let w = 0; w < HEATMAP_WEEKS; w++) {
-    const col: number[] = [];
-    for (let d = 0; d < 7; d++) {
-      const dayOffset = w * 7 + d;
-      const cellDate = new Date(baseYear, baseMonth, baseDay + dayOffset);
-      const dateStr = localDateStr(cellDate);
-      const v = dayCounts.get(dateStr) ?? 0;
-      if (v > maxVal) maxVal = v;
-      col.push(v);
-    }
-    grid.push(col);
-  }
-  return { grid, maxVal };
 }
 
 export async function run(providers: Provider[], getProviders?: () => Provider[]) {
@@ -1161,8 +1064,7 @@ export async function run(providers: Provider[], getProviders?: () => Provider[]
         break;
 
       case "s": {
-        const idx = SORT_CYCLE.indexOf(state.sortMode);
-        state.sortMode = SORT_CYCLE[(idx + 1) % SORT_CYCLE.length]!;
+        state.sortMode = nextSortMode(state.sortMode);
         state.sortAsc = SORT_DEFAULT_ASC[state.sortMode]!;
         state.skills = sortSkills(skillCounts(state.filteredCalls), state.sortMode, state.sortAsc);
         state.scroll = 0;

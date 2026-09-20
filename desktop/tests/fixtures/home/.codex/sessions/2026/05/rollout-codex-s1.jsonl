@@ -1,0 +1,4 @@
+{"type":"session_meta","timestamp":"2026-04-30T15:00:00.000Z","payload":{"id":"codex-s1","cwd":"/home/tester/code/facts"}}
+{"type":"response_item","timestamp":"2026-04-30T13:00:00.000Z","payload":{"content":[{"type":"input_text","text":"<skill><name>facts</name></skill> go"}]}}
+{"type":"response_item","timestamp":"2026-04-30T14:00:00.000Z","payload":{"content":[{"type":"input_text","text":"<skill><name>commit</name></skill> go"}]}}
+{"type":"response_item","timestamp":"2026-04-30T15:00:00.000Z","payload":{"content":[{"type":"input_text","text":"<skill><name>timeboxed-iterating</name></skill> go"}]}}

@@ -1,0 +1,90 @@
+{
+  "views": [
+    {
+      "view": "dashboard",
+      "headings": [
+        "◆ skill frequency 10 skills",
+        "▣ activity map 16 weeks",
+        "◑ time of day",
+        "● recent"
+      ],
+      "text_length": 1397
+    },
+    {
+      "view": "activity",
+      "headings": [
+        "≡ calls 601"
+      ],
+      "text_length": 10888
+    },
+    {
+      "view": "audit",
+      "headings": [
+        "▧ skill audit 20 findings",
+        "★MOST USED — last 4 weeks(9)",
+        "▲RISING — 50%+ growth last 4w(1)",
+        "▼DECLINING — 50%+ drop last 4w(0)",
+        "⚠STALE — unused 28+ days(0)",
+        "◈CROSS-PROJECT — used in 3+ projects(10)",
+        "◇ONE-OFF — used once(0)",
+        "▪SINGLE-PROJECT — 1 project only(0)"
+      ],
+      "text_length": 1104
+    },
+    {
+      "view": "providers",
+      "headings": [
+        "⌁ reader",
+        "▣ providers 5 of 5 detected"
+      ],
+      "text_length": 1175
+    },
+    {
+      "view": "settings",
+      "headings": [
+        "⌁ data",
+        "▣ provider paths leave empty to auto-detect",
+        "⌀ noise filters one per line, case-insensitive substring",
+        "◐ appearance & window"
+      ],
+      "text_length": 1046
+    },
+    {
+      "view": "detail",
+      "headings": [
+        "◆ skill frequency 10 skills",
+        "◆ review",
+        "▸ weekly trend 16 weeks",
+        "▪ by project",
+        "≡ calls 75"
+      ],
+      "text_length": 3626
+    },
+    {
+      "view": "live",
+      "headings": [
+        "◆ skill frequency 11 skills",
+        "▣ activity map 16 weeks",
+        "◑ time of day",
+        "● recent"
+      ],
+      "text_length": 1433
+    }
+  ],
+  "calls": 601,
+  "skills": [
+    "review",
+    "one-off-migration",
+    "facts",
+    "release-notes",
+    "commit",
+    "timeboxed-iterating",
+    "bugbash",
+    "verification-before-completion",
+    "brainstorm",
+    "legacy-audit"
+  ],
+  "reader": "rustIndex",
+  "errors": [],
+  "live_calls": 602
+}

@@ -88,6 +88,7 @@ fn push_skill(
     timestamp_ms: i64,
     project: &str,
     session_id: &str,
+    file: &str,
 ) {
     if skill.is_empty() || builtins.contains(skill) || seen.contains(skill) {
         return;
@@ -99,12 +100,20 @@ fn push_skill(
         project: project.to_string(),
         session_id: session_id.to_string(),
         source: SOURCE.into(),
+        file: file.to_string(),
     });
 }
 
+pub fn default_root(home: &str) -> String {
+    format!("{home}/.grok/sessions")
+}
+
 pub fn collect(home: &str) -> ProviderResult {
-    let sessions_dir = format!("{home}/.grok/sessions");
-    let available = Path::new(&sessions_dir).is_dir();
+    collect_at(&default_root(home))
+}
+
+pub fn collect_at(sessions_dir: &str) -> ProviderResult {
+    let available = Path::new(sessions_dir).is_dir();
 
     if !available {
         return ProviderResult {
@@ -117,7 +126,7 @@ pub fn collect(home: &str) -> ProviderResult {
     ProviderResult {
         name: SOURCE.into(),
         available: true,
-        calls: collect_from_dir(&sessions_dir),
+        calls: collect_from_dir(sessions_dir),
     }
 }
 
@@ -197,6 +206,7 @@ fn collect_from_dir(sessions_dir: &str) -> Vec<SkillCall> {
                                     project: project.clone(),
                                     session_id: session_id.to_string(),
                                     source: SOURCE.into(),
+                                    file: updates_path.display().to_string(),
                                 });
                             }
                             continue;
@@ -211,7 +221,7 @@ fn collect_from_dir(sessions_dir: &str) -> Vec<SkillCall> {
                             {
                                 push_skill(
                                     &mut calls, &mut seen, &builtins, &skill, ts, &project,
-                                    session_id,
+                                    session_id, &updates_path.display().to_string(),
                                 );
                             }
                         }
@@ -263,6 +273,7 @@ fn collect_from_dir(sessions_dir: &str) -> Vec<SkillCall> {
                                     session_ts,
                                     &project,
                                     &session_dir_name,
+                                    &chat_path.display().to_string(),
                                 );
                             }
                             continue;
@@ -290,6 +301,7 @@ fn collect_from_dir(sessions_dir: &str) -> Vec<SkillCall> {
                                         session_ts,
                                         &project,
                                         &session_dir_name,
+                                        &chat_path.display().to_string(),
                                     );
                                 }
                             }

@@ -16,9 +16,15 @@ const BUILTINS: &[&str] = &[
     "mcp", "terminal-setup", "remote-env", "remote-control", "fast",
 ];
 
+pub fn default_root(home: &str) -> String {
+    std::env::var("CLAUDE_CONFIG_DIR").unwrap_or_else(|_| format!("{home}/.claude"))
+}
+
 pub fn collect(home: &str) -> ProviderResult {
-    let claude_home = std::env::var("CLAUDE_CONFIG_DIR")
-        .unwrap_or_else(|_| format!("{home}/.claude"));
+    collect_at(&default_root(home))
+}
+
+pub fn collect_at(claude_home: &str) -> ProviderResult {
     let history_path = format!("{claude_home}/history.jsonl");
     let projects_dir = format!("{claude_home}/projects");
 
@@ -68,6 +74,7 @@ pub fn collect(home: &str) -> ProviderResult {
                 project: entry["project"].as_str().unwrap_or("").to_string(),
                 session_id: entry["sessionId"].as_str().unwrap_or("").to_string(),
                 source: SOURCE.into(),
+                file: history_path.clone(),
             });
         }
     }
@@ -216,6 +223,7 @@ fn parse_session_file(
                 project: call_project,
                 session_id: session_id.clone(),
                 source: SOURCE.into(),
+                file: path.display().to_string(),
             });
         }
     }

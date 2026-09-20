@@ -13,9 +13,16 @@ const BUILTINS: &[&str] = &[
     "settings", "list",
 ];
 
+pub fn default_root(home: &str) -> String {
+    format!("{home}/.local/share/opencode/opencode.db")
+}
+
 pub fn collect(home: &str) -> ProviderResult {
-    let db_path = format!("{home}/.local/share/opencode/opencode.db");
-    let available = Path::new(&db_path).exists();
+    collect_at(&default_root(home))
+}
+
+pub fn collect_at(db_path: &str) -> ProviderResult {
+    let available = Path::new(db_path).exists();
 
     if !available {
         return ProviderResult {
@@ -29,7 +36,7 @@ pub fn collect(home: &str) -> ProviderResult {
     let mut calls = Vec::new();
 
     let conn = match Connection::open_with_flags(
-        &db_path,
+        db_path,
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
     ) {
         Ok(c) => c,
@@ -106,6 +113,7 @@ pub fn collect(home: &str) -> ProviderResult {
             project: directory,
             session_id,
             source: SOURCE.into(),
+            file: db_path.to_string(),
         });
     }
 
