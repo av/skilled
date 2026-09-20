@@ -27,6 +27,10 @@ export async function maybeRunE2E(hooks: E2EHooks): Promise<void> {
   if (e2e.record) { try { await invoke("e2e_record", { start: true, fps: 10 }); } catch (e) { errors.push(`record: ${String(e)}`); } }
   const capture = async (name: string) => {
     await sleep(dwell); // let animations finish (longer when recording)
+    // A refresh may be in flight (watcher, interval): wait for the view to have content.
+    for (let i = 0; i < 50 && !document.querySelector("main h2, main h3"); i++) await sleep(100);
+    const err = document.querySelector("main .error");
+    if (err) errors.push(`${name}: error panel visible: ${err.textContent?.slice(0, 300)}`);
     // Some compositors never tick CSS animations for a freshly mapped window, which
     // leaves bars and heatmap cells at their first keyframe; jump them to the end.
     try { for (const a of document.getAnimations()) a.finish(); } catch { /* not supported */ }

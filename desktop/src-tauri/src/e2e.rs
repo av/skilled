@@ -6,7 +6,9 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+#[cfg(target_os = "linux")]
+use tauri::Manager;
 
 pub fn dir() -> Option<PathBuf> {
     std::env::var_os("SKILLED_E2E_DIR").map(PathBuf::from)

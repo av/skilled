@@ -53,6 +53,7 @@ fn harness(tag: &str) -> Harness {
     std::env::remove_var("SKILLED_E2E_DIR");
     let mut app = configure(mock_builder()).build(mock_context(noop_assets())).expect("app builds on the mock runtime");
     // tauri runs the setup hook (state, watcher) on the first event-loop iteration.
+    #[allow(deprecated)]
     app.run_iteration(|_, _| {});
     let webview = WebviewWindowBuilder::new(&app, "main", Default::default()).build().expect("mock webview");
     Harness { _app: app, webview, home, config, _guard: guard }
@@ -108,6 +109,40 @@ fn snapshot_indexes_the_home_in_process_and_updates_quick_stats() {
     let again: crate::Snapshot = h.invoke("snapshot", serde_json::json!({ "force": false })).unwrap();
     assert!(!again.reindexed, "fresh index is reused");
     assert_eq!(again.calls.len(), snap.calls.len());
+}
+
+#[test]
+fn overlapping_forced_snapshots_do_not_race_on_the_index_temp_file() {
+    // Watcher event + interval + manual refresh can overlap; the index writer uses one
+    // index.db.tmp, so loads must be serialized (regression: CI showed the error panel).
+    let h = harness("race");
+    let webview = h.webview.clone();
+    let workers: Vec<_> = (0..4)
+        .map(|_| {
+            let webview = webview.clone();
+            std::thread::spawn(move || {
+                get_ipc_response(
+                    &webview,
+                    InvokeRequest {
+                        cmd: "snapshot".into(),
+                        callback: CallbackFn(0),
+                        error: CallbackFn(1),
+                        url: (if cfg!(any(windows, target_os = "android")) { "http://tauri.localhost" } else { "tauri://localhost" }).parse().unwrap(),
+                        body: InvokeBody::Json(serde_json::json!({ "force": true })),
+                        headers: Default::default(),
+                        invoke_key: INVOKE_KEY.to_string(),
+                    },
+                )
+                .map(|b| b.deserialize::<crate::Snapshot>().unwrap().calls.len())
+            })
+        })
+        .collect();
+    let counts: Vec<Result<usize, serde_json::Value>> = workers.into_iter().map(|w| w.join().unwrap()).collect();
+    for c in &counts {
+        assert!(c.is_ok(), "concurrent forced snapshot failed: {c:?}");
+    }
+    let first = *counts[0].as_ref().unwrap();
+    assert!(first > 10 && counts.iter().all(|c| *c.as_ref().unwrap() == first), "{counts:?}");
 }
 
 #[test]

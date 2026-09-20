@@ -66,13 +66,20 @@ pub struct AppInfo {
 
 // --- commands ----------------------------------------------------------------
 
+static LOAD_LOCK: Mutex<()> = Mutex::new(());
+
 #[tauri::command]
 async fn snapshot<R: tauri::Runtime>(app: AppHandle<R>, state: State<'_, AppState>, force: bool) -> Result<Snapshot, String> {
     let settings = state.settings.lock().map_err(|e| e.to_string())?.clone();
     let home = state.home.clone();
-    let snap = tauri::async_runtime::spawn_blocking(move || data::load(&settings, &home, force))
-        .await
-        .map_err(|e| e.to_string())??;
+    let snap = tauri::async_runtime::spawn_blocking(move || {
+        // Overlapping loads (watcher event + interval + manual refresh) would race on
+        // the index's single `index.db.tmp`; run them one at a time.
+        let _serial = LOAD_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        data::load(&settings, &home, force)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
     let stats = QuickStats::from_snapshot(&snap);
     *state.last.lock().map_err(|e| e.to_string())? = Some(stats.clone());
     update_tray(&app, &stats);

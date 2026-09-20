@@ -208,9 +208,9 @@
   id: desktop-unit
   command: cd desktop && bun test tests/unit 2>&1 | grep -q ' 0 fail'
   tags: [desktop, spec]
-- label: Every Tauri command is tested through the IPC layer on tauri's mock runtime (snapshot, settings, app_info, export, e2e guards, unknown command)
+- label: Every Tauri command is tested through the IPC layer on tauri's mock runtime (snapshot incl. overlapping loads, settings, app_info, export, e2e guards, unknown command)
   id: desktop-command-tests
-  command: cargo test --manifest-path desktop/src-tauri/Cargo.toml --quiet commands_test 2>&1 | grep -q 'test result: ok. 6 passed'
+  command: cargo test --manifest-path desktop/src-tauri/Cargo.toml --quiet commands_test 2>&1 | grep -q 'test result: ok. 7 passed'
   tags: [desktop, spec]
 - label: The frontend data path (snapshot → hydrate → noise filters → derive → every view) is tested headless with react-dom/server
   id: desktop-data-path-tests

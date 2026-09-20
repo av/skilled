@@ -62,6 +62,10 @@ beforeAll(async () => {
   const path = join(out, "report.json");
   if (!existsSync(path)) throw new Error(`no report.json written (exit ${exitCode})\n${stderr}`);
   report = JSON.parse(readFileSync(path, "utf8")) as Report;
+  // Keep the report in the CI log so a failing assertion can be diagnosed without artifacts.
+  console.log(`e2e report: reader=${report.reader} calls=${report.calls} live=${report.live_calls} errors=${JSON.stringify(report.errors)}`);
+  for (const v of report.views) console.log(`  ${v.view}: ${v.text_length} chars, headings=${JSON.stringify(v.headings)}`);
+  if (stderr.trim()) console.log(`app stderr:\n${stderr.trim().slice(0, 2000)}`);
 });
 
 afterAll(() => {
