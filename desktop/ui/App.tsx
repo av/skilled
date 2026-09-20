@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { skillDetail } from "../../src/data";
-import { SORT_DEFAULT_ASC, nextSortMode, sortSkills, type SortMode } from "../../src/view";
+import { SORT_DEFAULT_ASC, SORT_LABELS, nextSortMode, sortSkills, type SortMode } from "../../src/view";
 import { backend, hydrate, DEFAULT_SETTINGS, type AppInfo, type DesktopCall, type Settings, type Snapshot } from "./lib/bridge";
 import { VIEWS, applyNoise, derive, exporters, keymap, toCsv, toJson, type View } from "./lib/model";
 import { Dashboard } from "./views/Dashboard";
@@ -9,6 +9,7 @@ import { Audit } from "./views/Audit";
 import { Providers } from "./views/Providers";
 import { SettingsView } from "./views/Settings";
 import { Detail } from "./views/Detail";
+import { Header } from "./components/Header";
 import { FilterBar } from "./components/FilterBar";
 import { StatusBar } from "./components/StatusBar";
 import { maybeRunE2E } from "./lib/e2e";
@@ -174,17 +175,19 @@ export function App() {
 
   return (
     <div className="app" data-view={view}>
+      <Header />
+      <div className="sep" aria-hidden />
       <header className="titlebar" data-tauri-drag-region>
-        <div className="brand" data-tauri-drag-region><span className="logo" aria-hidden />Skilled</div>
+        <div className="brand" data-tauri-drag-region>Skilled</div>
         <nav className="tabs" aria-label="Views">
           {VIEWS.map(v => (
-            <button key={v.id} className={view === v.id ? "tab active" : "tab"} onClick={() => setView(v.id)} title={`${mod}+${v.key}`} aria-current={view === v.id ? "page" : undefined}>{v.label}</button>
+            <button key={v.id} className={view === v.id ? "tab active" : "tab"} onClick={() => setView(v.id)} title={`${mod}+${v.key}`} aria-current={view === v.id ? "page" : undefined}>{v.label.toLowerCase()}</button>
           ))}
         </nav>
         <div className="actions">
-          <button className="btn" onClick={() => exportRef.current && void doExport(exportRef.current, "json")} title={`Export current view as JSON (${mod}+E)`}>JSON</button>
-          <button className="btn" onClick={() => exportRef.current && void doExport(exportRef.current, "csv")} title="Export current view as CSV">CSV</button>
-          <button className="btn primary" onClick={() => void refresh(true)} disabled={loading} title={`Refresh (r, ${mod}+R)`}>{loading ? "Refreshing…" : "Refresh"}</button>
+          <button className="btn" onClick={() => exportRef.current && void doExport(exportRef.current, "json")} title={`Export current view as JSON (${mod}+E)`}>json</button>
+          <button className="btn" onClick={() => exportRef.current && void doExport(exportRef.current, "csv")} title="Export current view as CSV">csv</button>
+          <button className="btn primary" onClick={() => void refresh(true)} disabled={loading} title={`Refresh (r, ${mod}+R)`}>{loading ? "refreshing…" : "refresh"}</button>
         </div>
       </header>
 
@@ -198,13 +201,13 @@ export function App() {
         {!error && snapshot && view === "dashboard" && (
           detail
             ? <Detail detail={detail} calls={detailCalls} onClose={() => setDetailSkill(null)} onExport={kind => void doExport({ name: `skilled-${detail.skill}`, json: () => exporters.detail(detail), rows: () => exporters.detailRows(detail) }, kind)} skills={skills} selected={selected} onSelect={i => { setSelected(i); setDetailSkill(skills[i]?.skill ?? null); }} />
-            : <Dashboard derived={derived} skills={skills} selected={selected} onSelect={i => setSelected(i)} onOpen={i => { setSelected(i); setDetailSkill(skills[i]?.skill ?? null); }} now={now} />
+            : <Dashboard derived={derived} skills={skills} selected={selected} onSelect={i => setSelected(i)} onOpen={i => { setSelected(i); setDetailSkill(skills[i]?.skill ?? null); }} now={now} sortLabel={`${SORT_LABELS[sortMode]} ${sortAsc ? "▲" : "▼"}`} />
         )}
         {!error && snapshot && view === "activity" && <Activity calls={derived.filtered} filterExpr={filterExpr} onFilter={setFilterExpr} sources={derived.sourceOptions} projects={derived.projectOptions} onNotify={say} />}
         {!error && snapshot && view === "audit" && <Audit audit={derived.audit} onOpenSkill={s => { setDetailSkill(s); setView("dashboard"); }} />}
         {!error && snapshot && view === "providers" && <Providers snapshot={snapshot} info={info} onNotify={say} />}
         {view === "settings" && <SettingsView settings={settings} onSave={saveSettings} info={info} providers={snapshot?.providers ?? []} />}
-        {!error && !snapshot && <div className="empty">Reading local history…</div>}
+        {!error && !snapshot && <div className="empty">reading local history…</div>}
       </main>
 
       <StatusBar snapshot={snapshot} derived={derived} loading={loading} detail={!!detail} view={view} toast={toast} mod={mod} />

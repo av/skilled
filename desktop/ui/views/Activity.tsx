@@ -24,16 +24,16 @@ export function Activity({ calls, filterExpr, onFilter, sources, projects, onNot
   return (
     <section className="panel activity" aria-label="Raw skill invocations">
       <header>
-        <h2>Calls <span className="muted">{calls.length.toLocaleString()}</span></h2>
+        <h2><span className="glyph">≡</span> calls <span className="muted">{calls.length.toLocaleString()}</span></h2>
         <div className="actions">
           <input value={filterExpr} onChange={e => onFilter(e.target.value)} placeholder="filter: s:codex p:app review" aria-label="Filter" spellCheck={false} />
-          <select onChange={e => onFilter(setFilterTag(filterExpr, "s", e.target.value))} defaultValue="" aria-label="Source"><option value="">All sources</option>{sources.map(s => <option key={s} value={s.toLowerCase().replace(/\s+/g, "-")}>{s}</option>)}</select>
-          <select onChange={e => onFilter(setFilterTag(filterExpr, "p", e.target.value))} defaultValue="" aria-label="Project"><option value="">All projects</option>{projects.map(p => <option key={p.path} value={p.short.toLowerCase()}>{p.short}</option>)}</select>
-          <select value={sort} onChange={e => setSort(e.target.value as CallSort)} aria-label="Sort"><option value="recent">Recent first</option><option value="name">By skill</option></select>
+          <select onChange={e => onFilter(setFilterTag(filterExpr, "s", e.target.value))} defaultValue="" aria-label="Source"><option value="">all sources</option>{sources.map(s => <option key={s} value={s.toLowerCase().replace(/\s+/g, "-")}>{s}</option>)}</select>
+          <select onChange={e => onFilter(setFilterTag(filterExpr, "p", e.target.value))} defaultValue="" aria-label="Project"><option value="">all projects</option>{projects.map(p => <option key={p.path} value={p.short.toLowerCase()}>{p.short}</option>)}</select>
+          <select value={sort} onChange={e => setSort(e.target.value as CallSort)} aria-label="Sort"><option value="recent">by recent</option><option value="name">by skill</option></select>
         </div>
       </header>
       <table className="calls">
-        <thead><tr><th>When</th><th>Skill</th><th>Project</th><th>Session</th><th>Source</th><th /></tr></thead>
+        <thead><tr><th>when</th><th>skill</th><th>project</th><th>session</th><th>source</th><th /></tr></thead>
         <tbody>{shown.map((c, i) => <CallRow key={i} call={c} onNotify={onNotify} />)}</tbody>
       </table>
       {sorted.length > limit && <button className="btn wide" onClick={() => setLimit(l => l + PAGE)}>Show {Math.min(PAGE, sorted.length - limit)} more of {(sorted.length - limit).toLocaleString()}</button>}
@@ -55,7 +55,7 @@ export function CallRow({ call: c, hideSkill = false, onNotify }: { call: Deskto
       <td className="when" title={fmtDateTime(c.timestamp)}>{timeAgo(c.timestamp)}</td>
       {!hideSkill && <td className="skill">{c.skill}</td>}
       <td className="project" title={c.project}>{projectShort(c.project)}</td>
-      <td className="session mono" title={c.sessionId}>{c.sessionId.slice(0, 12)}</td>
+      <td className="session" title={c.sessionId}>{c.sessionId.slice(0, 12)}</td>
       <td className="src">{c.source}</td>
       <td className="rowactions">
         <button className="link" onClick={() => void act("open")} title={c.file ? `Open ${c.file}` : "No source file"} disabled={!c.file}>open</button>

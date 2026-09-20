@@ -24,7 +24,7 @@ export function SettingsView({ settings, onSave, info, providers }: Props) {
   return (
     <form className="settings" onSubmit={e => { e.preventDefault(); setSaving(true); void onSave(draft).finally(() => setSaving(false)); }}>
       <section className="panel">
-        <h2>Data</h2>
+        <h2><span className="glyph">⌁</span> data</h2>
         <label className="row"><span>Reader</span>
           <select value={draft.readerMode} onChange={e => set("readerMode", e.target.value as Settings["readerMode"])}>
             <option value="index">Rust index (default; same ~/.skilled/index.db as the TUI)</option>
@@ -41,7 +41,7 @@ export function SettingsView({ settings, onSave, info, providers }: Props) {
       </section>
 
       <section className="panel">
-        <h2>Provider paths <span className="muted">leave empty to auto-detect</span></h2>
+        <h2><span className="glyph">▣</span> provider paths <span className="muted">leave empty to auto-detect</span></h2>
         {PATH_KEYS.map(p => {
           const live = providers.find(x => x.slug === p.slug);
           return (
@@ -54,14 +54,14 @@ export function SettingsView({ settings, onSave, info, providers }: Props) {
       </section>
 
       <section className="panel">
-        <h2>Noise filters <span className="muted">one per line, case-insensitive substring</span></h2>
+        <h2><span className="glyph">⌀</span> noise filters <span className="muted">one per line, case-insensitive substring</span></h2>
         <label className="row area"><span>Hide skills matching</span><textarea value={lines(draft.noiseSkills)} onChange={e => set("noiseSkills", parseLines(e.target.value))} rows={3} placeholder={"test-\nscratch"} /></label>
         <label className="row area"><span>Hide projects matching</span><textarea value={lines(draft.noiseProjects)} onChange={e => set("noiseProjects", parseLines(e.target.value))} rows={3} placeholder={"/tmp/\nplayground"} /></label>
         <label className="row area"><span>Hide sources matching</span><textarea value={lines(draft.noiseSources)} onChange={e => set("noiseSources", parseLines(e.target.value))} rows={2} placeholder="droid" /></label>
       </section>
 
       <section className="panel">
-        <h2>Appearance &amp; window</h2>
+        <h2><span className="glyph">◐</span> appearance &amp; window</h2>
         <label className="row"><span>Theme</span>
           <select value={draft.theme} onChange={e => set("theme", e.target.value as Settings["theme"])}><option value="system">Follow system</option><option value="light">Light</option><option value="dark">Dark</option></select>
         </label>

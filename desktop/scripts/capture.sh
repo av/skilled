@@ -19,11 +19,13 @@ OUT=$(mktemp -d)
 CFG=$(mktemp -d)
 # The app writes ~/.skilled/index.db into $HOME: use a throwaway copy of the fixture.
 cp -r "$FIXTURE" "$OUT/home"
+# Screenshots use the dark theme (the TUI's native look) regardless of the host OS setting.
+printf '{"theme":"%s"}\n' "${THEME:-dark}" > "$CFG/settings.json"
 
 RECORD=0
 [ "$1" = "--record" ] && RECORD=1
 
-env HOME="$OUT/home" XDG_CONFIG_HOME="$CFG" SKILLED_E2E_DIR="$OUT" \
+env HOME="$OUT/home" XDG_CONFIG_HOME="$CFG" SKILLED_CONFIG_DIR="$CFG" SKILLED_E2E_DIR="$OUT" \
     SKILLED_E2E_DWELL_MS=${DWELL:-1400} SKILLED_E2E_RECORD=$RECORD "$BIN"
 
 mkdir -p docs

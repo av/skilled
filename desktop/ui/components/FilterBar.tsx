@@ -22,20 +22,20 @@ export function FilterBar({ expr, onChange, focusToken, sources, projects, sortM
       <label className="filter-input">
         <span className="slash" aria-hidden>/</span>
         <div className="ghost" aria-hidden>{tokens.map((t, i) => <span key={i} className={`tok ${t.kind}`}>{t.text}</span>)}</div>
-        <input ref={input} value={expr} onChange={e => onChange(e.target.value)} placeholder="filter: source:codex p:myapp review" spellCheck={false} aria-label="Filter skills (source:, project:, skill name)" />
+        <input ref={input} value={expr} onChange={e => onChange(e.target.value)} placeholder="filter · s: source  p: project  bare text matches skill name" spellCheck={false} aria-label="Filter skills (source:, project:, skill name)" />
         {expr && <button className="clear" onClick={() => onChange("")} aria-label="Clear filter">×</button>}
       </label>
       <select value={sourceValue} onChange={e => onChange(setFilterTag(expr, "s", e.target.value))} aria-label="Source">
-        <option value="">All sources</option>
+        <option value="">all sources</option>
         {sources.map(s => <option key={s} value={s.toLowerCase().replace(/\s+/g, "-")}>{s}</option>)}
       </select>
       <select value={projectValue} onChange={e => onChange(setFilterTag(expr, "p", e.target.value))} aria-label="Project">
-        <option value="">All projects</option>
+        <option value="">all projects</option>
         {projects.map(p => <option key={p.path} value={p.short.toLowerCase()} title={p.path}>{p.short} ({p.count})</option>)}
       </select>
       <div className="sort">
         <button className="btn" onClick={onSortCycle} title="Cycle sort (s)">{SORT_LABELS[sortMode]}</button>
-        <button className="btn" onClick={onSortToggle} title="Toggle direction (Tab)" aria-label={sortAsc ? "ascending" : "descending"}>{sortAsc ? "↑" : "↓"}</button>
+        <button className="btn" onClick={onSortToggle} title="Toggle direction (Tab)" aria-label={sortAsc ? "ascending" : "descending"}>{sortAsc ? "▲" : "▼"}</button>
       </div>
     </div>
   );

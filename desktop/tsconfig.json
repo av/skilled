@@ -12,5 +12,5 @@
     "allowImportingTsExtensions": true,
     "types": ["bun"]
   },
-  "include": ["ui/**/*.ts", "ui/**/*.tsx", "tests/**/*.ts", "scripts/**/*.ts", "../src/models.ts", "../src/data.ts", "../src/view.ts"]
+  "include": ["ui/**/*.ts", "ui/**/*.tsx", "tests/**/*.ts", "scripts/**/*.ts", "../src/models.ts", "../src/data.ts", "../src/view.ts", "../src/noise.ts"]
 }
