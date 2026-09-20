@@ -44,8 +44,22 @@ export async function maybeRunE2E(hooks: E2EHooks): Promise<void> {
     hooks.cycleSort(); await sleep(dwell / 2); hooks.cycleSort(); await sleep(dwell / 2); hooks.toggleSortDir(); await sleep(dwell / 2);
     hooks.cycleSort(); hooks.toggleSortDir(); await sleep(dwell / 2);
     hooks.setView("audit"); await sleep(dwell);
-    hooks.setView("dashboard"); await sleep(dwell / 2);
-    await invoke("e2e_record", { start: false, fps: 0 });
   }
-  await invoke("e2e_report", { report: { views, calls: state?.calls ?? 0, skills: state?.skills ?? [], reader: state?.reader ?? "", errors } });
+  // Live update: a new Claude Code history line is written on disk while the app
+  // runs; the watcher must emit files-changed and the UI must re-index and show it.
+  let liveCalls: number | null = null;
+  hooks.setView("dashboard"); hooks.setFilter(""); await sleep(dwell / 2);
+  const before = hooks.ready()?.calls ?? 0;
+  try {
+    await invoke("e2e_append_call", { skill: "live-update" });
+    for (let i = 0; i < 120; i++) { // watcher debounce 1.5s + re-index
+      await sleep(100);
+      const c = hooks.ready()?.calls ?? 0;
+      if (c > before && hooks.ready()?.skills.includes("live-update")) { liveCalls = c; break; }
+    }
+    if (liveCalls === null) errors.push(`live update not reflected: still ${hooks.ready()?.calls} calls after 12s (before ${before})`);
+  } catch (e) { errors.push(`append: ${String(e)}`); }
+  await capture("live");
+  if (e2e.record) { await sleep(dwell); await invoke("e2e_record", { start: false, fps: 0 }); }
+  await invoke("e2e_report", { report: { views, calls: state?.calls ?? 0, skills: state?.skills ?? [], reader: state?.reader ?? "", errors, live_calls: liveCalls } });
 }

@@ -37,7 +37,7 @@
         "⌁ reader",
         "▣ providers 5 of 5 detected"
       ],
-      "text_length": 1673
+      "text_length": 1234
     },
     {
       "view": "settings",
@@ -59,6 +59,16 @@
         "calls 75"
       ],
       "text_length": 3606
+    },
+    {
+      "view": "live",
+      "headings": [
+        "◆ skill usage 11 skills",
+        "▦ activity last 16 weeks",
+        "◷ time of day",
+        "≡ recent activity"
+      ],
+      "text_length": 1373
     }
   ],
   "calls": 601,
@@ -75,5 +85,6 @@
     "legacy-audit"
   ],
   "reader": "rustIndex",
-  "errors": []
+  "errors": [],
+  "live_calls": 602
 }

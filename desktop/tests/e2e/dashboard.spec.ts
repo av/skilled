@@ -24,6 +24,7 @@ interface Report {
   skills: string[];
   reader: string;
   errors: string[];
+  live_calls: number | null;
 }
 
 let out = "";
@@ -92,7 +93,7 @@ describe("desktop e2e (real binary + fixture home)", () => {
 
   test("every view renders with content", () => {
     const names = report.views.map(v => v.view);
-    expect(names).toEqual(["dashboard", "activity", "audit", "providers", "settings", "detail"]);
+    expect(names).toEqual(["dashboard", "activity", "audit", "providers", "settings", "detail", "live"]);
     for (const v of report.views) expect(v.text_length).toBeGreaterThan(100);
     const audit = report.views.find(v => v.view === "audit")!;
     for (const k of ["MOST USED", "RISING", "DECLINING", "STALE", "CROSS-PROJECT", "ONE-OFF", "SINGLE-PROJECT"]) {
@@ -104,9 +105,16 @@ describe("desktop e2e (real binary + fixture home)", () => {
     expect(detail.headings.some(h => h.includes("weekly usage"))).toBe(true);
   });
 
+  test("a history line written while the app runs shows up via the file watcher", () => {
+    expect(report.live_calls).not.toBeNull();
+    expect(report.live_calls!).toBe(report.calls + 1);
+    expect(existsSync(join(home, ".claude/history.jsonl"))).toBe(true);
+    expect(readFileSync(join(home, ".claude/history.jsonl"), "utf8")).toContain("/live-update now");
+  });
+
   test("snapshots are written for every view on Linux", () => {
     if (process.platform !== "linux") return;
-    for (const v of ["dashboard", "activity", "audit", "providers", "settings", "detail"]) {
+    for (const v of ["dashboard", "activity", "audit", "providers", "settings", "detail", "live"]) {
       const png = join(out, `${v}.png`);
       expect(existsSync(png)).toBe(true);
       expect(statSync(png).size).toBeGreaterThan(10_000);

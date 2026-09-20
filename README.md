@@ -117,9 +117,10 @@ Develop and build (requires Bun, Rust and the [Tauri prerequisites](https://taur
 cd desktop
 bun install
 bun run dev              # tauri dev with UI rebuild-on-change
-bun run test             # unit tests
+bun run test             # unit tests: view models + the snapshot → views data path (headless React)
+cd src-tauri && cargo test && cd ..   # Tauri commands invoked over IPC on the mock runtime, index, settings, watcher
 sh scripts/dev-check.sh  # typecheck + debug binary
-bun run test:e2e         # launches the debug binary against tests/fixtures/home
+bun run test:e2e         # launches the debug binary against tests/fixtures/home, incl. a live history update
 bun run build            # release bundles in src-tauri/target/release/bundle
 ```
 

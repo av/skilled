@@ -208,6 +208,18 @@
   id: desktop-unit
   command: cd desktop && bun test tests/unit 2>&1 | grep -q ' 0 fail'
   tags: [desktop, spec]
+- label: Every Tauri command is tested through the IPC layer on tauri's mock runtime (snapshot, settings, app_info, export, e2e guards, unknown command)
+  id: desktop-command-tests
+  command: cargo test --manifest-path desktop/src-tauri/Cargo.toml --quiet commands_test 2>&1 | grep -q 'test result: ok. 6 passed'
+  tags: [desktop, spec]
+- label: The frontend data path (snapshot → hydrate → noise filters → derive → every view) is tested headless with react-dom/server
+  id: desktop-data-path-tests
+  command: cd desktop && bun test tests/unit/data-path.test.ts 2>&1 | grep -q ' 0 fail'
+  tags: [desktop, spec]
+- label: The e2e run appends a real history line while the app runs and asserts the watcher-driven refresh shows it (live_calls = calls + 1)
+  id: desktop-e2e-live
+  command: grep -q 'live_calls' desktop/tests/e2e/dashboard.spec.ts && grep -q 'e2e_append_call' desktop/src-tauri/src/e2e.rs
+  tags: [desktop, spec]
 - label: An end-to-end test launches the built app against a fixture history and asserts the dashboard renders fixture skills
   id: desktop-e2e
   command: test -f desktop/tests/e2e/dashboard.spec.ts && test -d desktop/tests/fixtures/home && grep -q 'report.json' desktop/tests/e2e/dashboard.spec.ts

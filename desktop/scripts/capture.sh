@@ -7,8 +7,9 @@
 #   FIXTURE=tests/fixtures/home scripts/capture.sh   # use the small committed fixture
 set -e
 cd "$(dirname "$0")/.."
-BIN=src-tauri/target/debug/skilled-desktop
-test -x "$BIN" || { echo "build first: scripts/dev-check.sh"; exit 1; }
+#   SKILLED_E2E_BIN=src-tauri/target/release/skilled-desktop scripts/capture.sh --record   # record the release build
+BIN=${SKILLED_E2E_BIN:-src-tauri/target/debug/skilled-desktop}
+test -x "$BIN" || { echo "build first: scripts/dev-check.sh (or bun run tauri build --no-bundle)"; exit 1; }
 
 FIXTURE=${FIXTURE:-tests/fixtures/home-now}
 if [ "$FIXTURE" = "tests/fixtures/home-now" ]; then
@@ -26,7 +27,7 @@ env HOME="$OUT/home" XDG_CONFIG_HOME="$CFG" SKILLED_E2E_DIR="$OUT" \
     SKILLED_E2E_DWELL_MS=${DWELL:-1400} SKILLED_E2E_RECORD=$RECORD "$BIN"
 
 mkdir -p docs
-for v in dashboard detail activity audit providers settings; do
+for v in dashboard detail activity audit providers settings live; do
   cp "$OUT/$v.png" docs/
 done
 cp "$OUT/report.json" docs/e2e-report.json

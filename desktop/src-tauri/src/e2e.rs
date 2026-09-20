@@ -19,6 +19,26 @@ pub struct Report {
     pub skills: Vec<String>,
     pub reader: String,
     pub errors: Vec<String>,
+    /// Calls visible after `e2e_append_call` wrote a new history line and the
+    /// watcher → `skilled://files-changed` → refresh path re-indexed (None if skipped).
+    #[serde(default)]
+    pub live_calls: Option<usize>,
+}
+
+/// Append one real Claude Code history line (skill `live-update`) to
+/// `$HOME/.claude/history.jsonl`, exactly as the CLI writes it, so the running
+/// app has to notice it through the file watcher. Only in e2e mode.
+#[tauri::command]
+pub fn e2e_append_call(skill: String) -> Result<String, String> {
+    dir().ok_or("not in e2e mode")?;
+    let safe: String = skill.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').collect();
+    let path = std::path::PathBuf::from(skilled_index::home_dir()).join(".claude").join("history.jsonl");
+    let ts = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_millis();
+    let line = format!("{{\"display\":\"/{safe} now\",\"timestamp\":{ts},\"project\":\"/home/tester/code/skilled\",\"sessionId\":\"live-{ts}\"}}\n");
+    use std::io::Write;
+    let mut f = fs::OpenOptions::new().append(true).create(true).open(&path).map_err(|e| e.to_string())?;
+    f.write_all(line.as_bytes()).map_err(|e| e.to_string())?;
+    Ok(path.display().to_string())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,7 +70,7 @@ pub fn e2e_config() -> Config {
 /// Snapshot the visible webview to `<dir>/<name>.png`. Returns false when the
 /// platform cannot snapshot (non-Linux); the report is still produced.
 #[tauri::command]
-pub async fn e2e_shot(app: AppHandle, name: String) -> Result<bool, String> {
+pub async fn e2e_shot<R: tauri::Runtime>(app: AppHandle<R>, name: String) -> Result<bool, String> {
     let dir = dir().ok_or("not in e2e mode")?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let safe: String = name.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_').collect();
@@ -59,7 +79,7 @@ pub async fn e2e_shot(app: AppHandle, name: String) -> Result<bool, String> {
 }
 
 #[cfg(target_os = "linux")]
-async fn snapshot(app: &AppHandle, path: PathBuf) -> Result<bool, String> {
+async fn snapshot<R: tauri::Runtime>(app: &AppHandle<R>, path: PathBuf) -> Result<bool, String> {
     use webkit2gtk::{SnapshotOptions, SnapshotRegion, WebViewExt};
     let window = app.get_webview_window("main").ok_or("no main window")?;
     let (tx, rx) = tauri::async_runtime::channel::<Result<(), String>>(1);
@@ -85,14 +105,14 @@ async fn snapshot(app: &AppHandle, path: PathBuf) -> Result<bool, String> {
 }
 
 #[cfg(not(target_os = "linux"))]
-async fn snapshot(_app: &AppHandle, _path: PathBuf) -> Result<bool, String> {
+async fn snapshot<R: tauri::Runtime>(_app: &AppHandle<R>, _path: PathBuf) -> Result<bool, String> {
     Ok(false)
 }
 
 /// Start/stop a frame grabber for recordings (Linux only; no-op elsewhere).
 /// Frames land in `<dir>/frames/00001.png …` at roughly `fps`.
 #[tauri::command]
-pub async fn e2e_record(app: AppHandle, start: bool, fps: u32) -> Result<bool, String> {
+pub async fn e2e_record<R: tauri::Runtime>(app: AppHandle<R>, start: bool, fps: u32) -> Result<bool, String> {
     let dir = dir().ok_or("not in e2e mode")?;
     if !start {
         RECORDING.store(false, std::sync::atomic::Ordering::SeqCst);
@@ -128,7 +148,7 @@ async fn tokio_sleep(d: std::time::Duration) {
 
 /// Receives the renderer's report and exits the app.
 #[tauri::command]
-pub fn e2e_report(app: AppHandle, report: Report) -> Result<(), String> {
+pub fn e2e_report<R: tauri::Runtime>(app: AppHandle<R>, report: Report) -> Result<(), String> {
     let dir = dir().ok_or("not in e2e mode")?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     fs::write(dir.join("report.json"), serde_json::to_string_pretty(&report).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;

@@ -5,6 +5,8 @@ mod data;
 mod e2e;
 mod settings;
 mod watcher;
+#[cfg(test)]
+mod commands_test;
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -65,7 +67,7 @@ pub struct AppInfo {
 // --- commands ----------------------------------------------------------------
 
 #[tauri::command]
-async fn snapshot(app: AppHandle, state: State<'_, AppState>, force: bool) -> Result<Snapshot, String> {
+async fn snapshot<R: tauri::Runtime>(app: AppHandle<R>, state: State<'_, AppState>, force: bool) -> Result<Snapshot, String> {
     let settings = state.settings.lock().map_err(|e| e.to_string())?.clone();
     let home = state.home.clone();
     let snap = tauri::async_runtime::spawn_blocking(move || data::load(&settings, &home, force))
@@ -83,7 +85,7 @@ fn get_settings(state: State<'_, AppState>) -> Result<Settings, String> {
 }
 
 #[tauri::command]
-fn save_settings(app: AppHandle, state: State<'_, AppState>, settings: Settings) -> Result<Settings, String> {
+fn save_settings<R: tauri::Runtime>(app: AppHandle<R>, state: State<'_, AppState>, settings: Settings) -> Result<Settings, String> {
     settings.save(&state.config_dir)?;
     *state.settings.lock().map_err(|e| e.to_string())? = settings.clone();
     restart_watcher(&app, &settings);
@@ -92,7 +94,7 @@ fn save_settings(app: AppHandle, state: State<'_, AppState>, settings: Settings)
 }
 
 #[tauri::command]
-fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
+fn app_info<R: tauri::Runtime>(app: AppHandle<R>, state: State<'_, AppState>) -> AppInfo {
     AppInfo {
         version: app.package_info().version.to_string(),
         index_version: skilled_index::VERSION.to_string(),
@@ -116,7 +118,7 @@ fn path_exists(path: String) -> bool {
 }
 
 #[tauri::command]
-fn quit(app: AppHandle) {
+fn quit<R: tauri::Runtime>(app: AppHandle<R>) {
     app.exit(0);
 }
 
@@ -124,7 +126,12 @@ fn quit(app: AppHandle) {
 
 const TRAY_ID: &str = "skilled-tray";
 
-fn show_main(app: &AppHandle) {
+/// No tray in the e2e harness or under `cargo test` (mock runtime, no GTK loop).
+fn tray_supported() -> bool {
+    !cfg!(test) && e2e::dir().is_none()
+}
+
+fn show_main<R: tauri::Runtime>(app: &AppHandle<R>) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
         let _ = w.unminimize();
@@ -132,7 +139,7 @@ fn show_main(app: &AppHandle) {
     }
 }
 
-fn build_tray(app: &AppHandle, stats: Option<&QuickStats>) -> tauri::Result<()> {
+fn build_tray<R: tauri::Runtime>(app: &AppHandle<R>, stats: Option<&QuickStats>) -> tauri::Result<()> {
     let s = stats.cloned().unwrap_or(QuickStats { calls: 0, skills: 0, projects: 0, sources: 0 });
     let calls = MenuItem::with_id(app, "stat-calls", format!("{} calls", s.calls), false, None::<&str>)?;
     let skills = MenuItem::with_id(app, "stat-skills", format!("{} skills · {} projects", s.skills, s.projects), false, None::<&str>)?;
@@ -172,14 +179,14 @@ fn build_tray(app: &AppHandle, stats: Option<&QuickStats>) -> tauri::Result<()> 
     Ok(())
 }
 
-fn update_tray(app: &AppHandle, stats: &QuickStats) {
+fn update_tray<R: tauri::Runtime>(app: &AppHandle<R>, stats: &QuickStats) {
     if app.tray_by_id(TRAY_ID).is_some() {
         let _ = build_tray(app, Some(stats));
     }
 }
 
-fn apply_tray_visibility(app: &AppHandle, show: bool) {
-    match (show, app.tray_by_id(TRAY_ID)) {
+fn apply_tray_visibility<R: tauri::Runtime>(app: &AppHandle<R>, show: bool) {
+    match (show && tray_supported(), app.tray_by_id(TRAY_ID)) {
         (true, None) => {
             let stats = app.state::<AppState>().last.lock().ok().and_then(|l| l.clone());
             let _ = build_tray(app, stats.as_ref());
@@ -193,7 +200,7 @@ fn apply_tray_visibility(app: &AppHandle, show: bool) {
 
 // --- watcher ----------------------------------------------------------------
 
-fn restart_watcher(app: &AppHandle, settings: &Settings) {
+fn restart_watcher<R: tauri::Runtime>(app: &AppHandle<R>, settings: &Settings) {
     let state = app.state::<AppState>();
     let mut slot = match state.watcher.lock() {
         Ok(s) => s,
@@ -215,14 +222,21 @@ fn restart_watcher(app: &AppHandle, settings: &Settings) {
 
 // --- app --------------------------------------------------------------------
 
-pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+/// Where settings live: `SKILLED_CONFIG_DIR` (tests, harness) or the OS app-config dir.
+fn config_dir<R: tauri::Runtime>(app: &tauri::App<R>) -> PathBuf {
+    if let Some(dir) = std::env::var_os("SKILLED_CONFIG_DIR") {
+        return PathBuf::from(dir);
+    }
+    app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from(skilled_index::home_dir()).join(".skilled"))
+}
+
+/// State, commands and watcher, independent of the runtime so tests can drive the
+/// same command surface on `tauri::test::MockRuntime`. `run()` adds the desktop
+/// plugins and the tray; the e2e harness and tests stay tray-less.
+pub fn configure<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
+    builder
         .setup(|app| {
-            let config_dir = app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from(skilled_index::home_dir()).join(".skilled"));
+            let config_dir = config_dir(app);
             let settings = Settings::load(&config_dir);
             let home = skilled_index::home_dir();
             app.manage(AppState {
@@ -233,15 +247,21 @@ pub fn run() {
                 watcher: Mutex::new(None),
             });
             let handle = app.handle().clone();
-            if e2e::dir().is_some() {
-                return Ok(()); // harness: no tray, no watcher
-            }
-            if settings.show_tray {
+            if tray_supported() && settings.show_tray {
                 build_tray(&handle, None)?;
             }
             restart_watcher(&handle, &settings);
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![snapshot, get_settings, save_settings, app_info, write_export, path_exists, quit, e2e::e2e_config, e2e::e2e_shot, e2e::e2e_record, e2e::e2e_append_call, e2e::e2e_report])
+}
+
+pub fn run() {
+    configure(tauri::Builder::default())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
@@ -253,7 +273,6 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![snapshot, get_settings, save_settings, app_info, write_export, path_exists, quit, e2e::e2e_config, e2e::e2e_shot, e2e::e2e_record, e2e::e2e_report])
         .run(tauri::generate_context!())
         .expect("error while running Skilled");
 }

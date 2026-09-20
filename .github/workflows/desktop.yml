@@ -81,6 +81,10 @@ jobs:
         working-directory: desktop
         run: bun run build:ui
 
+      - name: Rust tests (Tauri commands over IPC on the mock runtime, index reader, settings, watcher)
+        working-directory: desktop/src-tauri
+        run: cargo test
+
       - name: Debug build for e2e
         if: runner.os == 'Linux'
         working-directory: desktop/src-tauri
