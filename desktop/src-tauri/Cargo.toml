@@ -1,6 +1,6 @@
 [package]
 name = "skilled-desktop"
-version = "0.3.3"
+version = "0.4.0"
 description = "Desktop app for Skilled: local skill usage insights for AI coding tools"
 authors = ["av"]
 license = "MIT"
