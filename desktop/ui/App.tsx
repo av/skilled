@@ -175,7 +175,7 @@ export function App() {
   return (
     <div className="app" data-view={view}>
       <header className="titlebar" data-tauri-drag-region>
-        <div className="brand" data-tauri-drag-region><span className="logo" aria-hidden>▮▮▮</span> Skilled</div>
+        <div className="brand" data-tauri-drag-region><span className="logo" aria-hidden />Skilled</div>
         <nav className="tabs" aria-label="Views">
           {VIEWS.map(v => (
             <button key={v.id} className={view === v.id ? "tab active" : "tab"} onClick={() => setView(v.id)} title={`${mod}+${v.key}`} aria-current={view === v.id ? "page" : undefined}>{v.label}</button>

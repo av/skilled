@@ -89,9 +89,9 @@ describe("desktop e2e (real binary + fixture home)", () => {
     for (const skill of ["review", "commit", "bugbash", "facts"]) expect(report.skills).toContain(skill);
     const dash = report.views.find(v => v.view === "dashboard");
     expect(dash).toBeDefined();
-    expect(dash!.headings.some(h => h.includes("skill usage"))).toBe(true);
-    expect(dash!.headings.some(h => h.includes("activity"))).toBe(true);
-    expect(dash!.headings.some(h => h.includes("time of day"))).toBe(true);
+    expect(dash!.headings.some(h => h.toLowerCase().includes("skill usage"))).toBe(true);
+    expect(dash!.headings.some(h => h.toLowerCase().includes("activity"))).toBe(true);
+    expect(dash!.headings.some(h => h.toLowerCase().includes("time of day"))).toBe(true);
     expect(dash!.text_length).toBeGreaterThan(300);
   });
 
@@ -101,12 +101,12 @@ describe("desktop e2e (real binary + fixture home)", () => {
     for (const v of report.views) expect(v.text_length).toBeGreaterThan(100);
     const audit = report.views.find(v => v.view === "audit")!;
     for (const k of ["MOST USED", "RISING", "DECLINING", "STALE", "CROSS-PROJECT", "ONE-OFF", "SINGLE-PROJECT"]) {
-      expect(audit.headings.some(h => h.includes(k))).toBe(true);
+      expect(audit.headings.some(h => h.toUpperCase().includes(k))).toBe(true);
     }
     const providers = report.views.find(v => v.view === "providers")!;
     expect(providers.headings.some(h => h.includes("5 of 5"))).toBe(true);
     const detail = report.views.find(v => v.view === "detail")!;
-    expect(detail.headings.some(h => h.includes("weekly usage"))).toBe(true);
+    expect(detail.headings.some(h => h.toLowerCase().includes("weekly usage"))).toBe(true);
   });
 
   test("a history line written while the app runs shows up via the file watcher", () => {

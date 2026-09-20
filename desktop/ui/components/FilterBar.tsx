@@ -26,16 +26,16 @@ export function FilterBar({ expr, onChange, focusToken, sources, projects, sortM
         {expr && <button className="clear" onClick={() => onChange("")} aria-label="Clear filter">×</button>}
       </label>
       <select value={sourceValue} onChange={e => onChange(setFilterTag(expr, "s", e.target.value))} aria-label="Source">
-        <option value="">all sources</option>
+        <option value="">All sources</option>
         {sources.map(s => <option key={s} value={s.toLowerCase().replace(/\s+/g, "-")}>{s}</option>)}
       </select>
       <select value={projectValue} onChange={e => onChange(setFilterTag(expr, "p", e.target.value))} aria-label="Project">
-        <option value="">all projects</option>
+        <option value="">All projects</option>
         {projects.map(p => <option key={p.path} value={p.short.toLowerCase()} title={p.path}>{p.short} ({p.count})</option>)}
       </select>
       <div className="sort">
         <button className="btn" onClick={onSortCycle} title="Cycle sort (s)">{SORT_LABELS[sortMode]}</button>
-        <button className="btn" onClick={onSortToggle} title="Toggle direction (Tab)" aria-label={sortAsc ? "ascending" : "descending"}>{sortAsc ? "▲" : "▼"}</button>
+        <button className="btn" onClick={onSortToggle} title="Toggle direction (Tab)" aria-label={sortAsc ? "ascending" : "descending"}>{sortAsc ? "↑" : "↓"}</button>
       </div>
     </div>
   );

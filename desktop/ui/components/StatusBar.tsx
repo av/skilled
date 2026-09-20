@@ -8,7 +8,7 @@ export function StatusBar({ snapshot, derived, loading, detail, view, toast, mod
   const hints = view === "dashboard"
     ? detail
       ? [["Esc", "close"], ["j/k", "next skill"], ["a", "audit"], ["r", "refresh"]]
-      : [["s", "sort"], ["Tab", "direction"], ["j/k", "select"], ["⏎", "detail"], ["/", "filter"], ["a", "audit"], ["r", "refresh"], [`${mod}+1…5`, "views"]]
+      : [["s", "sort"], ["Tab", "direction"], ["j/k", "select"], ["↵", "detail"], ["/", "filter"], ["a", "audit"], ["r", "refresh"], [`${mod}+1…5`, "views"]]
     : [["Esc", "dashboard"], ["r", "refresh"], [`${mod}+E`, "export"], [`${mod}+1…5`, "views"]];
   return (
     <footer className="statusbar">

@@ -36,8 +36,8 @@ describe("frontend data path (snapshot → views)", () => {
     const html = renderToString(createElement(Dashboard, { derived, skills, selected: 0, onSelect: noop, onOpen: noop, now }));
     expect(html).toContain(String(snapshot.calls.length)); // CALLS stat card
     for (const s of skills.slice(0, 5)) expect(html).toContain(s.skill); // ranked bars
-    expect(html).toContain("activity"); // heatmap
-    expect(html).toContain("time of day"); // hourly histogram
+    expect(html).toContain("Activity"); // heatmap
+    expect(html).toContain("Time of day"); // hourly histogram
     expect((html.match(/class="heat-cell/g) ?? []).length).toBe(16 * 7);
     expect((html.match(/class="hour"/g) ?? []).length).toBe(24);
   });
@@ -78,15 +78,15 @@ describe("frontend data path (snapshot → views)", () => {
     const snapshot = mockSnapshot(400, now.getTime());
     const { derived, skills } = await pipeline(snapshot);
     const audit = renderToString(createElement(Audit, { audit: derived.audit, onOpenSkill: noop }));
-    for (const k of ["MOST USED", "RISING", "DECLINING", "STALE", "CROSS-PROJECT", "ONE-OFF", "SINGLE-PROJECT"]) expect(audit).toContain(k);
+    for (const k of ["Most used", "Rising", "Declining", "Stale", "Cross-project", "One-off", "Single-project"]) expect(audit).toContain(k);
 
     const top = skills[0]!.skill;
     const detail = skillDetail(derived.filtered, top);
     const calls = derived.filtered.filter(c => c.skill === top);
     const html = renderToString(createElement(Detail, { detail, calls, onClose: noop, onExport: noop, skills, selected: 0, onSelect: noop }));
     expect(html).toContain(top);
-    expect(html).toContain("weekly usage");
-    expect(html).toContain("by project");
+    expect(html).toContain("Weekly usage");
+    expect(html).toContain("By project");
     expect(html).toContain(String(calls.length));
   });
 
