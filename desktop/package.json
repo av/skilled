@@ -1,7 +1,7 @@
 {
   "name": "skilled-desktop",
   "productName": "Skilled",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Desktop app for Skilled: local skill usage insights for AI coding tools",
   "private": true,
   "type": "module",
