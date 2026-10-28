@@ -42,6 +42,7 @@ pub struct PathOverrides {
     pub droid: Option<String>,
     pub opencode: Option<String>,
     pub grok: Option<String>,
+    pub cursor: Option<String>,
 }
 
 impl PathOverrides {
@@ -55,6 +56,7 @@ impl PathOverrides {
             droid: Self::clean(&self.droid),
             opencode: Self::clean(&self.opencode),
             grok: Self::clean(&self.grok),
+            cursor: Self::clean(&self.cursor),
         }
     }
 }

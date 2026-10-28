@@ -39,7 +39,7 @@ fn skill_md_re() -> &'static Regex {
 }
 
 /// If `file_path` is a skill playbook (`…/skills/<name>/SKILL.md`), return `<name>`.
-fn skill_name_from_skill_md_path(file_path: &str) -> Option<String> {
+pub(crate) fn skill_name_from_skill_md_path(file_path: &str) -> Option<String> {
     if file_path.is_empty() {
         return None;
     }

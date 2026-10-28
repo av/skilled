@@ -97,13 +97,13 @@ fn snapshot_indexes_the_home_in_process_and_updates_quick_stats() {
         assert!(skills.contains(s), "missing fixture skill {s}");
     }
     assert!(snap.calls.iter().all(|c| !c.file.is_empty()), "every call carries its source file");
-    assert!(snap.providers.iter().filter(|p| p.available).count() == 5, "all five providers detected: {:?}", snap.providers);
+    assert!(snap.providers.iter().filter(|p| p.available).count() == 6, "all six providers detected: {:?}", snap.providers);
     assert!(h.home.join(".skilled/index.db").exists(), "index written under the app's HOME");
 
     let state = h._app.state::<AppState>();
     let last = state.last.lock().unwrap().clone().expect("quick stats cached for the tray");
     assert_eq!(last.calls, snap.calls.len());
-    assert!(last.skills >= 4 && last.sources == 5);
+    assert!(last.skills >= 4 && last.sources == 6);
 
     // Second call without force reuses the fresh index (no re-parse).
     let again: crate::Snapshot = h.invoke("snapshot", serde_json::json!({ "force": false })).unwrap();

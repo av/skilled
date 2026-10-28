@@ -104,7 +104,7 @@ describe("desktop e2e (real binary + fixture home)", () => {
       expect(audit.headings.some(h => h.toUpperCase().includes(k))).toBe(true);
     }
     const providers = report.views.find(v => v.view === "providers")!;
-    expect(providers.headings.some(h => h.includes("5 of 5"))).toBe(true);
+    expect(providers.headings.some(h => h.includes("6 of 6"))).toBe(true);
     const detail = report.views.find(v => v.view === "detail")!;
     expect(detail.headings.some(h => h.toLowerCase().includes("weekly trend"))).toBe(true);
   });

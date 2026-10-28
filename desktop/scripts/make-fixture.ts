@@ -1,5 +1,5 @@
 /**
- * Generates tests/fixtures/home: a fake $HOME with histories for all five
+ * Generates tests/fixtures/home: a fake $HOME with histories for all six
  * providers in the shapes the Rust indexer and the TS providers both parse.
  * Deterministic (seeded), dates relative to a fixed anchor unless --now.
  *
@@ -98,5 +98,15 @@ for (let i = 0; i < grokCalls; i++) {
 }
 writeFileSync(join(grokProj, "updates.jsonl"), grokLines.join("\n") + "\n");
 
-const total = claudeCalls + 2 + codexCalls + droidCalls + ocCalls + grokCalls;
+// --- Cursor ---------------------------------------------------------------------
+const cursorSession = "11111111-2222-4333-8444-555555555555";
+const cursorDir = join(root, ".cursor", "projects", "Users-tester-code-skilled", "agent-transcripts", cursorSession);
+mkdirSync(cursorDir, { recursive: true });
+const cursorBody = [
+  JSON.stringify({ role: "user", message: { content: [{ type: "text", text: "<timestamp>Wednesday, May 6, 2026, 3:00 PM (UTC+0)</timestamp>" }] } }),
+  JSON.stringify({ role: "assistant", message: { content: [{ type: "tool_use", name: "Read", input: { path: "/home/tester/.cursor/skills/review/SKILL.md" } }] } }),
+].join("\n") + "\n";
+writeFileSync(join(cursorDir, `${cursorSession}.jsonl`), cursorBody);
+
+const total = claudeCalls + 2 + codexCalls + droidCalls + ocCalls + grokCalls + 1;
 console.log(`fixture written to ${root} (~${total} calls incl. 1 builtin filtered)`);

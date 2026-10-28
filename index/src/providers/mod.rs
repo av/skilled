@@ -1,5 +1,6 @@
 pub mod claude_code;
 pub mod codex;
+pub mod cursor;
 pub mod droid;
 pub mod grok;
 pub mod opencode;
@@ -15,6 +16,7 @@ pub struct ProviderPaths {
     pub droid: Option<String>,
     pub opencode: Option<String>,
     pub grok: Option<String>,
+    pub cursor: Option<String>,
 }
 
 /// A provider's display name and the path it will read for the given overrides.
@@ -40,6 +42,7 @@ pub fn locations(home: &str, paths: &ProviderPaths) -> Vec<ProviderLocation> {
         pick("Droid CLI", "droid", &paths.droid, droid::default_root(home)),
         pick("OpenCode", "opencode", &paths.opencode, opencode::default_root(home)),
         pick("Grok CLI", "grok", &paths.grok, grok::default_root(home)),
+        pick("Cursor", "cursor", &paths.cursor, cursor::default_root(home)),
     ]
 }
 
@@ -51,12 +54,13 @@ pub fn all_providers(home: &str, progress: bool) -> Vec<ProviderResult> {
 /// Collect every provider, honouring per-provider path overrides.
 pub fn all_providers_with(home: &str, paths: &ProviderPaths, progress: bool) -> Vec<ProviderResult> {
     let locs = locations(home, paths);
-    let collectors: [fn(&str) -> ProviderResult; 5] = [
+    let collectors: [fn(&str) -> ProviderResult; 6] = [
         claude_code::collect_at,
         codex::collect_at,
         droid::collect_at,
         opencode::collect_at,
         grok::collect_at,
+        cursor::collect_at,
     ];
 
     let mut results = Vec::new();
@@ -82,7 +86,7 @@ mod tests {
     fn overrides_replace_defaults_only_where_set() {
         let paths = ProviderPaths { codex: Some("/tmp/codex-sessions".into()), ..Default::default() };
         let locs = locations("/home/u", &paths);
-        assert_eq!(locs.len(), 5);
+        assert_eq!(locs.len(), 6);
         assert_eq!(locs[1].slug, "codex");
         assert_eq!(locs[1].path, "/tmp/codex-sessions");
         assert!(locs[1].overridden);

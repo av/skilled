@@ -9,6 +9,7 @@ const PATH_KEYS: { key: keyof PathOverrides; slug: string; label: string; hint: 
   { key: "droid", slug: "droid", label: "Droid CLI", hint: "sessions directory (default ~/.factory/sessions)" },
   { key: "opencode", slug: "opencode", label: "OpenCode", hint: "opencode.db file (default ~/.local/share/opencode/opencode.db)" },
   { key: "grok", slug: "grok", label: "Grok CLI", hint: "sessions directory (default ~/.grok/sessions)" },
+  { key: "cursor", slug: "cursor", label: "Cursor", hint: "projects directory (default ~/.cursor/projects)" },
 ];
 
 const lines = (xs: string[]) => xs.join("\n");

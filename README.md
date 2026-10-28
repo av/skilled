@@ -8,7 +8,7 @@
 
 Your AI coding tools keep traces. Skilled reads them.
 
-Live TUI dashboard that aggregates skill usage across Claude Code, OpenCode, Codex, Grok, and Droid. Reads local history files only. Zero network, zero telemetry.
+Live TUI dashboard that aggregates skill usage across Claude Code, OpenCode, Codex, Grok, Droid, and Cursor. Reads local history files only. Zero network, zero telemetry.
 
 ## What you get
 
@@ -75,12 +75,13 @@ Add `--json` to any command for machine-readable output. Filter with `--source <
 | **Codex** | Local session history |
 | **Grok** | Local session history, including `read_file` of `skills/<name>/SKILL.md` |
 | **Droid** | Local session history |
+| **Cursor** | `~/.cursor/projects/*/agent-transcripts/*/*.jsonl` — `Read` of `skills/<name>/SKILL.md` |
 
 Skilled auto-detects which tools are installed. No configuration needed. If the history files exist, they show up.
 
 ## How it works
 
-Each tool writes session traces to predictable local paths. Skilled has a provider for each one that parses those files and extracts skill invocations (slash commands, tool calls, skill triggers, and Grok `read_file` loads of `skills/<name>/SKILL.md`) into a common format: skill name, timestamp, project, session, source.
+Each tool writes session traces to predictable local paths. Skilled has a provider for each one that parses those files and extracts skill invocations (slash commands, tool calls, skill triggers, and Grok `read_file` or Cursor `Read` loads of `skills/<name>/SKILL.md`) into a common format: skill name, timestamp, project, session, source.
 
 From there: frequency counts, weekly trends, hourly distribution, per-project breakdowns, and audit heuristics (rising = 50%+ increase over 4 weeks, stale = unused 28+ days, etc.).
 

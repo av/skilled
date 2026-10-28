@@ -3,6 +3,7 @@ import { CodexProvider } from "./providers/codex.js";
 import { DroidProvider } from "./providers/droid.js";
 import { OpenCodeProvider } from "./providers/opencode.js";
 import { GrokProvider } from "./providers/grok.js";
+import { CursorProvider } from "./providers/cursor.js";
 import { ensureIndex, refreshIndex, createIndexProviders } from "./providers/index.js";
 import { run, runSplash } from "./app.js";
 import { parseCli, runCli } from "./cli.js";
@@ -15,6 +16,7 @@ function tsProviders(): Provider[] {
     new DroidProvider(),
     new OpenCodeProvider(),
     new GrokProvider(),
+    new CursorProvider(),
   ];
 }
 

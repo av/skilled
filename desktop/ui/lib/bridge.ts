@@ -21,7 +21,7 @@ export interface Snapshot {
 }
 export type ReaderMode = "index" | "cli";
 export type ThemeSetting = "system" | "light" | "dark";
-export interface PathOverrides { claudeCode?: string | null; codex?: string | null; droid?: string | null; opencode?: string | null; grok?: string | null }
+export interface PathOverrides { claudeCode?: string | null; codex?: string | null; droid?: string | null; opencode?: string | null; grok?: string | null; cursor?: string | null }
 export interface Settings {
   readerMode: ReaderMode;
   dbPath: string;

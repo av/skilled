@@ -252,7 +252,7 @@ mod tests {
         assert!(claude.available);
         assert!(claude.path.starts_with(&home));
         assert!(!claude.overridden);
-        assert_eq!(snap.providers.len(), 5);
+        assert_eq!(snap.providers.len(), 6);
 
         // Second read within 60 s reuses the index.
         let again = read_via_index(&settings, &home, false).unwrap();

@@ -1,0 +1,2 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<timestamp>Wednesday, May 6, 2026, 3:00 PM (UTC+0)</timestamp>"}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"path":"/home/tester/.cursor/skills/review/SKILL.md"}}]}}
